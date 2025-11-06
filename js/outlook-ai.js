@@ -1,7 +1,10 @@
 // ===================================
 // Outlook AI - 智能郵件管理系統
-// JavaScript 交互功能
+// JavaScript 交互功能（連接真實郵件 API）
 // ===================================
+
+// API 配置
+const API_BASE_URL = 'http://localhost:3000/api';
 
 // 應用狀態管理
 const AppState = {
@@ -10,23 +13,379 @@ const AppState = {
     currentAssistantPanel: 'merchandising',
     contactsFilter: 'pending',
     completedContacts: [],
+    realEmails: [], // 真實郵件數據
+    emailCache: new Map(), // 郵件快取
 
-    // AI 模擬數據
-    aiNotes: {
-        1: {
-            summary: '高優先級客戶，預算充足，採購意願強烈',
-            keyPoints: ['採購數量 500-1000 件', '預算範圍 $50K-$100K', '本月底決定'],
-            nextAction: '今天下午 2:00 前回覆報價',
-            sentiment: 'positive'
-        },
-        2: {
-            summary: '物流問題需要緊急處理，客戶等待確認',
-            keyPoints: ['今日截止', '需要確認配送時間', '客戶有時間壓力'],
-            nextAction: '立即聯繫物流部門確認',
-            sentiment: 'urgent'
-        }
-    }
+    // AI 筆記（將從後端獲取）
+    aiNotes: new Map()
 };
+
+// ===================================
+// API 調用函數
+// ===================================
+
+// 獲取郵件列表
+async function fetchEmailsFromServer(options = {}) {
+    try {
+        const params = new URLSearchParams({
+            folder: options.folder || 'INBOX',
+            limit: options.limit || 50,
+            offset: options.offset || 0,
+            unreadOnly: options.unreadOnly || false
+        });
+
+        const response = await fetch(`${API_BASE_URL}/email/list?${params}`);
+        const data = await response.json();
+
+        if (data.success) {
+            AppState.realEmails = data.emails;
+            displayRealEmails(data.emails);
+            updateContactsFromEmails(data.emails);
+            return data.emails;
+        } else {
+            throw new Error(data.error || 'Failed to fetch emails');
+        }
+    } catch (error) {
+        console.error('Fetch emails error:', error);
+        showNotification('無法載入郵件：' + error.message, 'error');
+        return [];
+    }
+}
+
+// 獲取單個郵件
+async function fetchEmailById(emailId) {
+    try {
+        // 檢查快取
+        if (AppState.emailCache.has(emailId)) {
+            return AppState.emailCache.get(emailId);
+        }
+
+        const response = await fetch(`${API_BASE_URL}/email/${emailId}`);
+        const data = await response.json();
+
+        if (data.success) {
+            // 快取郵件
+            AppState.emailCache.set(emailId, data.email);
+
+            // 獲取 AI 分析
+            await analyzeEmailWithAI(data.email);
+
+            return data.email;
+        } else {
+            throw new Error(data.error || 'Failed to fetch email');
+        }
+    } catch (error) {
+        console.error('Fetch email error:', error);
+        showNotification('無法載入郵件：' + error.message, 'error');
+        return null;
+    }
+}
+
+// 發送郵件
+async function sendEmailToServer(emailData) {
+    try {
+        const response = await fetch(`${API_BASE_URL}/email/send`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(emailData)
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            showNotification('郵件已成功發送！', 'success');
+            return data.result;
+        } else {
+            throw new Error(data.error || 'Failed to send email');
+        }
+    } catch (error) {
+        console.error('Send email error:', error);
+        showNotification('郵件發送失敗：' + error.message, 'error');
+        throw error;
+    }
+}
+
+// AI 分析郵件
+async function analyzeEmailWithAI(email) {
+    try {
+        const response = await fetch(`${API_BASE_URL}/ai/analyze`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                emailContent: email.text || email.bodyPreview,
+                subject: email.subject,
+                from: email.from?.address || email.from?.emailAddress?.address
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            // 儲存 AI 分析結果
+            AppState.aiNotes.set(email.id, data.analysis);
+            return data.analysis;
+        }
+    } catch (error) {
+        console.error('AI analysis error:', error);
+    }
+    return null;
+}
+
+// AI 生成回覆
+async function generateAIReplyFromServer(emailContent, context = {}) {
+    try {
+        const response = await fetch(`${API_BASE_URL}/ai/generate-reply`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                emailContent,
+                context
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            return data.reply.content;
+        } else {
+            throw new Error(data.error || 'Failed to generate reply');
+        }
+    } catch (error) {
+        console.error('Generate reply error:', error);
+        showNotification('AI 生成回覆失敗：' + error.message, 'error');
+        return null;
+    }
+}
+
+// 搜索郵件
+async function searchEmailsOnServer(query) {
+    try {
+        const response = await fetch(`${API_BASE_URL}/email/search/${encodeURIComponent(query)}`);
+        const data = await response.json();
+
+        if (data.success) {
+            displayRealEmails(data.emails);
+            return data.emails;
+        } else {
+            throw new Error(data.error || 'Failed to search emails');
+        }
+    } catch (error) {
+        console.error('Search emails error:', error);
+        showNotification('搜索失敗：' + error.message, 'error');
+        return [];
+    }
+}
+
+// 標記為已讀
+async function markEmailAsRead(emailId) {
+    try {
+        const response = await fetch(`${API_BASE_URL}/email/${emailId}/read`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+
+        const data = await response.json();
+        return data.success;
+    } catch (error) {
+        console.error('Mark as read error:', error);
+        return false;
+    }
+}
+
+// ===================================
+// 顯示真實郵件
+// ===================================
+
+function displayRealEmails(emails) {
+    const emailList = document.getElementById('emailList');
+    if (!emailList) return;
+
+    emailList.innerHTML = '';
+
+    emails.forEach(email => {
+        const emailItem = createEmailListItem(email);
+        emailList.appendChild(emailItem);
+    });
+}
+
+function createEmailListItem(email) {
+    const div = document.createElement('div');
+    div.className = 'email-item';
+    if (!email.isRead) div.classList.add('unread');
+    div.dataset.emailId = email.id;
+
+    // 提取發件人信息
+    const fromAddress = email.from?.address || email.from?.emailAddress?.address || 'Unknown';
+    const fromName = email.from?.name || email.from?.emailAddress?.name || fromAddress;
+
+    // 格式化時間
+    const date = new Date(email.date || email.receivedDateTime);
+    const timeStr = formatEmailTime(date);
+
+    div.innerHTML = `
+        <div class="email-sender">
+            <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(fromName)}&size=40"
+                 alt="Sender" class="sender-avatar">
+            <div class="sender-info">
+                <h4>${fromName}</h4>
+                <span class="email-time">${timeStr}</span>
+            </div>
+        </div>
+        <div class="email-preview">
+            <h5 class="email-subject">${email.subject || '(無主旨)'}</h5>
+            <p class="email-snippet">${email.bodyPreview || email.text?.substring(0, 100) || ''}</p>
+        </div>
+        <div class="email-meta">
+            <span class="ai-label">AI 分析中...</span>
+        </div>
+    `;
+
+    // 點擊事件
+    div.addEventListener('click', async () => {
+        await selectRealEmail(email.id);
+    });
+
+    // 異步獲取 AI 分析
+    analyzeEmailWithAI(email).then(analysis => {
+        if (analysis) {
+            const aiLabel = div.querySelector('.ai-label');
+            if (aiLabel) {
+                aiLabel.textContent = `AI: ${analysis.summary.substring(0, 30)}...`;
+                aiLabel.className = `ai-label ${analysis.sentiment}`;
+            }
+        }
+    });
+
+    return div;
+}
+
+// 選擇並顯示真實郵件
+async function selectRealEmail(emailId) {
+    const email = await fetchEmailById(emailId);
+    if (!email) return;
+
+    // 更新選中狀態
+    document.querySelectorAll('.email-item').forEach(item => {
+        item.classList.remove('selected');
+        if (item.dataset.emailId === emailId) {
+            item.classList.add('selected');
+            item.classList.remove('unread');
+        }
+    });
+
+    // 顯示郵件內容
+    displayEmailContent(email);
+
+    // 標記為已讀
+    markEmailAsRead(emailId);
+
+    AppState.selectedEmail = emailId;
+}
+
+function displayEmailContent(email) {
+    // 更新郵件標題和元信息
+    const titleEl = document.querySelector('.email-title');
+    if (titleEl) titleEl.textContent = email.subject || '(無主旨)';
+
+    const fromName = email.from?.name || email.from?.emailAddress?.name || email.from?.address || 'Unknown';
+    const fromAddress = email.from?.address || email.from?.emailAddress?.address || '';
+
+    const headerMetaEl = document.querySelector('.email-header-meta');
+    if (headerMetaEl) {
+        headerMetaEl.innerHTML = `
+            <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(fromName)}&size=40"
+                 alt="Sender" class="sender-avatar-large">
+            <div>
+                <h4>${fromName} <span class="email-address">&lt;${fromAddress}&gt;</span></h4>
+                <p class="email-timestamp">${formatEmailTime(new Date(email.date || email.receivedDateTime))}</p>
+            </div>
+        `;
+    }
+
+    // 顯示郵件內容
+    const contentEl = document.querySelector('.email-content');
+    if (contentEl) {
+        const htmlContent = email.html || email.body?.content || '';
+        const textContent = email.text || email.bodyPreview || '';
+        contentEl.innerHTML = htmlContent || `<p>${textContent.replace(/\n/g, '<br>')}</p>`;
+    }
+
+    // 顯示 AI 分析
+    displayAIAnalysis(email.id);
+}
+
+function displayAIAnalysis(emailId) {
+    const analysis = AppState.aiNotes.get(emailId);
+    if (!analysis) return;
+
+    const insightsContent = document.querySelector('.insights-content');
+    if (!insightsContent) return;
+
+    insightsContent.innerHTML = `
+        <div class="insight-item priority-${analysis.priority}">
+            <span class="insight-icon">🎯</span>
+            <div>
+                <strong>客戶意向度: ${analysis.customerIntent}</strong>
+                <p>${analysis.summary}</p>
+            </div>
+        </div>
+        <div class="insight-item">
+            <span class="insight-icon">💼</span>
+            <div>
+                <strong>商機價值: ${analysis.estimatedValue}</strong>
+                <p>緊急程度: ${analysis.urgencyLevel}</p>
+            </div>
+        </div>
+        <div class="insight-item">
+            <span class="insight-icon">📋</span>
+            <div>
+                <strong>建議行動</strong>
+                <p>${analysis.suggestedAction}</p>
+            </div>
+        </div>
+        ${analysis.keyPoints.length > 0 ? `
+        <div class="insight-item">
+            <span class="insight-icon">🔑</span>
+            <div>
+                <strong>關鍵點</strong>
+                <ul class="suggestion-list">
+                    ${analysis.keyPoints.map(kp => `<li>${kp.category}: ${kp.keyword || kp.values?.join(', ')}</li>`).join('')}
+                </ul>
+            </div>
+        </div>
+        ` : ''}
+    `;
+}
+
+// 更新聯絡人面板
+function updateContactsFromEmails(emails) {
+    // 從郵件中提取聯絡人並更新聯絡人面板
+    // 這裡可以實現聯絡人去重和分組邏輯
+}
+
+// 格式化郵件時間
+function formatEmailTime(date) {
+    const now = new Date();
+    const diff = now - date;
+    const minutes = Math.floor(diff / 60000);
+    const hours = Math.floor(diff / 3600000);
+    const days = Math.floor(diff / 86400000);
+
+    if (minutes < 1) return '剛剛';
+    if (minutes < 60) return `${minutes} 分鐘前`;
+    if (hours < 24) return `${hours} 小時前`;
+    if (days < 7) return `${days} 天前`;
+
+    return date.toLocaleDateString('zh-TW');
+}
 
 // ===================================
 // 初始化
@@ -43,8 +402,31 @@ document.addEventListener('DOMContentLoaded', function() {
     initNavigation();
     initAIFeatures();
 
+    // 自動載入真實郵件
+    loadRealEmails();
+
     console.log('Outlook AI 初始化完成！');
 });
+
+// 載入真實郵件
+async function loadRealEmails() {
+    showNotification('正在連接郵件服務器...', 'info');
+
+    try {
+        const emails = await fetchEmailsFromServer({
+            limit: 50,
+            unreadOnly: false
+        });
+
+        if (emails.length > 0) {
+            showNotification(`成功載入 ${emails.length} 封郵件！`, 'success');
+        } else {
+            showNotification('沒有找到郵件', 'warning');
+        }
+    } catch (error) {
+        showNotification('郵件載入失敗，請檢查後端服務器是否運行', 'error');
+    }
+}
 
 // ===================================
 // 拖放功能 - 聯絡人卡片
@@ -287,7 +669,7 @@ function switchReplyMode(mode) {
     console.log(`切換到回覆模式: ${mode}`);
 }
 
-function generateAIReply() {
+async function generateAIReply() {
     const textarea = document.querySelector('.reply-textarea');
     if (!textarea) return;
 
@@ -295,52 +677,75 @@ function generateAIReply() {
     textarea.value = '正在生成 AI 回覆...';
     textarea.disabled = true;
 
-    // 模擬 AI 生成
-    setTimeout(() => {
-        const aiReply = `親愛的王小明，
+    try {
+        // 獲取當前選中的郵件
+        const emailId = AppState.selectedEmail;
+        const email = AppState.emailCache.get(emailId);
 
-感謝您對我們 X100 智能設備系列的關注！
+        if (!email) {
+            throw new Error('請先選擇一封郵件');
+        }
 
-針對您的詢問，我很高興為您提供以下資訊：
+        // 調用後端 AI 生成回覆
+        const emailContent = email.text || email.bodyPreview || '';
+        const reply = await generateAIReplyFromServer(emailContent, {
+            originalSubject: email.subject,
+            from: email.from
+        });
 
-1. **產品規格**：我已將 X100 的完整規格文件附加在本郵件中
-2. **報價方案**：
-   - 500-749 件：享 12% 折扣
-   - 750-999 件：享 15% 折扣
-   - 1000 件以上：享 18% 折扣
-3. **交貨期**：確認訂單後 3-5 個工作日內出貨
-4. **售後服務**：提供一年保固及全天候技術支援
-
-我們注意到您希望在本月底前做出決定，我們完全理解時效的重要性。如果您需要任何進一步的資訊或希望安排產品演示，請隨時與我聯繫。
-
-期待與貴公司合作！
-
-最誠摯的問候
-Amber`;
-
-        textarea.value = aiReply;
+        if (reply) {
+            textarea.value = reply;
+            showNotification('AI 回覆已生成', 'success');
+        } else {
+            throw new Error('AI 回覆生成失敗');
+        }
+    } catch (error) {
+        textarea.value = '';
+        showNotification(error.message, 'error');
+    } finally {
         textarea.disabled = false;
-        showNotification('AI 回覆已生成', 'success');
-    }, 1500);
+    }
 }
 
-function sendReply() {
+async function sendReply() {
     const textarea = document.querySelector('.reply-textarea');
     if (!textarea || !textarea.value.trim()) {
         showNotification('請輸入回覆內容', 'warning');
         return;
     }
 
-    // 模擬發送
-    showNotification('正在發送...', 'info');
+    try {
+        showNotification('正在發送...', 'info');
 
-    setTimeout(() => {
+        // 獲取當前選中的郵件
+        const emailId = AppState.selectedEmail;
+        const email = AppState.emailCache.get(emailId);
+
+        if (!email) {
+            throw new Error('找不到原始郵件');
+        }
+
+        // 準備郵件數據
+        const toAddress = email.from?.address || email.from?.emailAddress?.address;
+        const emailData = {
+            to: toAddress,
+            subject: `Re: ${email.subject}`,
+            text: textarea.value,
+            html: textarea.value.replace(/\n/g, '<br>'),
+            inReplyTo: email.messageId
+        };
+
+        // 發送到後端
+        await sendEmailToServer(emailData);
+
         textarea.value = '';
         showNotification('郵件已發送！', 'success');
 
         // 更新統計
         updateEmailStats();
-    }, 1000);
+    } catch (error) {
+        showNotification('發送失敗：' + error.message, 'error');
+    }
 }
 
 function updateEmailStats() {
