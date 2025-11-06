@@ -1,0 +1,2969 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Outlook AI - 智能郵件管理系統 (演示版)</title>
+    <style>
+/* ===================================
+   Outlook AI - 智能郵件管理系統
+   CSS Styles
+   =================================== */
+
+/* 全局重置和變量 */
+:root {
+    --primary-color: #0078D4;
+    --primary-hover: #106EBE;
+    --success-color: #00C853;
+    --warning-color: #FFC107;
+    --error-color: #F44336;
+    --urgent-color: #FF6B6B;
+
+    --bg-primary: #FFFFFF;
+    --bg-secondary: #F5F5F5;
+    --bg-tertiary: #FAFAFA;
+
+    --text-primary: #212121;
+    --text-secondary: #757575;
+    --text-tertiary: #9E9E9E;
+
+    --border-color: #E0E0E0;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.12);
+    --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
+    --shadow-lg: 0 10px 20px rgba(0,0,0,0.15);
+
+    --transition-fast: 0.15s ease;
+    --transition-normal: 0.3s ease;
+    --transition-slow: 0.5s ease;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    line-height: 1.6;
+    overflow-x: hidden;
+}
+
+/* ===================================
+   頂部導航欄
+   =================================== */
+.top-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 24px;
+    background: var(--bg-primary);
+    border-bottom: 1px solid var(--border-color);
+    box-shadow: var(--shadow-sm);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.logo h1 {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--primary-color);
+}
+
+.main-nav {
+    display: flex;
+    gap: 8px;
+}
+
+.nav-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    transition: var(--transition-fast);
+}
+
+.nav-btn:hover {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+}
+
+.nav-btn.active {
+    background: var(--primary-color);
+    color: white;
+}
+
+.user-profile {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 6px 12px;
+    border-radius: 24px;
+    cursor: pointer;
+    transition: var(--transition-fast);
+}
+
+.user-profile:hover {
+    background: var(--bg-secondary);
+}
+
+.user-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.user-name {
+    font-size: 14px;
+    font-weight: 500;
+}
+
+/* ===================================
+   主要內容區
+   =================================== */
+.main-container {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 16px;
+    max-width: 1800px;
+    margin: 0 auto;
+}
+
+/* ===================================
+   第一層：聯絡人大頭像面板
+   =================================== */
+.contacts-layer {
+    background: var(--bg-primary);
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: var(--shadow-md);
+}
+
+.layer-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.layer-header h2 {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.filter-tabs {
+    display: flex;
+    gap: 8px;
+}
+
+.tab {
+    padding: 6px 16px;
+    border: 1px solid var(--border-color);
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    transition: var(--transition-fast);
+}
+
+.tab:hover {
+    background: var(--bg-secondary);
+}
+
+.tab.active {
+    background: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+}
+
+.badge {
+    display: inline-block;
+    padding: 2px 8px;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 10px;
+    font-size: 11px;
+    margin-left: 4px;
+}
+
+/* 聯絡人網格 */
+.contacts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.contact-card {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px;
+    background: var(--bg-tertiary);
+    border: 2px solid transparent;
+    border-radius: 12px;
+    cursor: move;
+    transition: var(--transition-normal);
+    position: relative;
+}
+
+.contact-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+    border-color: var(--primary-color);
+}
+
+.contact-card.dragging {
+    opacity: 0.5;
+}
+
+.contact-avatar-wrapper {
+    position: relative;
+    align-self: center;
+}
+
+.contact-avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid white;
+    box-shadow: var(--shadow-sm);
+}
+
+.status-indicator {
+    position: absolute;
+    bottom: 5px;
+    right: 5px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 2px solid white;
+}
+
+.status-indicator.urgent {
+    background: var(--error-color);
+    animation: pulse 2s infinite;
+}
+
+.status-indicator.important {
+    background: var(--warning-color);
+}
+
+.status-indicator.normal {
+    background: var(--success-color);
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+.unread-count {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background: var(--error-color);
+    color: white;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 600;
+    box-shadow: var(--shadow-sm);
+}
+
+.contact-info {
+    text-align: center;
+}
+
+.contact-name {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.contact-company {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+}
+
+.contact-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: center;
+}
+
+.tag {
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 500;
+}
+
+.tag.priority-high {
+    background: #FFEBEE;
+    color: #C62828;
+}
+
+.tag.priority-medium {
+    background: #FFF8E1;
+    color: #F57C00;
+}
+
+.tag.priority-low {
+    background: #E8F5E9;
+    color: #2E7D32;
+}
+
+.tag.ai-suggested {
+    background: #E3F2FD;
+    color: #1565C0;
+}
+
+.tag.deadline {
+    background: #FFEBEE;
+    color: #C62828;
+}
+
+.tag.follow-up {
+    background: #F3E5F5;
+    color: #7B1FA2;
+}
+
+.tag.new-customer {
+    background: #E0F2F1;
+    color: #00695C;
+}
+
+/* AI 評分圓環 */
+.ai-score {
+    position: relative;
+    width: 50px;
+    height: 50px;
+    align-self: center;
+}
+
+.score-ring {
+    transform: rotate(0deg);
+}
+
+.score-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+/* 已完成區域 */
+.completed-zone {
+    margin-top: 12px;
+    padding: 24px;
+    border: 2px dashed var(--border-color);
+    border-radius: 12px;
+    background: var(--bg-tertiary);
+    transition: var(--transition-normal);
+}
+
+.completed-zone.drag-over {
+    border-color: var(--success-color);
+    background: #E8F5E9;
+}
+
+.zone-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    color: var(--text-secondary);
+    font-size: 14px;
+}
+
+/* ===================================
+   第二層：郵件 + 聊天介面
+   =================================== */
+.email-chat-layer {
+    display: grid;
+    grid-template-columns: 350px 1fr;
+    gap: 16px;
+    min-height: 600px;
+}
+
+/* 郵件列表面板 */
+.email-list-panel {
+    background: var(--bg-primary);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: var(--shadow-md);
+}
+
+.panel-header {
+    padding: 16px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.panel-header h2 {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 12px;
+}
+
+.search-box {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: var(--bg-secondary);
+    border-radius: 8px;
+}
+
+.search-box input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    outline: none;
+    font-size: 14px;
+}
+
+.email-list {
+    overflow-y: auto;
+    max-height: calc(100vh - 300px);
+}
+
+.email-item {
+    padding: 16px;
+    border-bottom: 1px solid var(--border-color);
+    cursor: pointer;
+    transition: var(--transition-fast);
+}
+
+.email-item:hover {
+    background: var(--bg-secondary);
+}
+
+.email-item.selected {
+    background: #E3F2FD;
+    border-left: 3px solid var(--primary-color);
+}
+
+.email-item.unread {
+    background: #FFFDE7;
+}
+
+.email-sender {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 8px;
+}
+
+.sender-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.sender-info {
+    flex: 1;
+}
+
+.sender-info h4 {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 2px;
+}
+
+.email-time {
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.email-preview {
+    margin-bottom: 8px;
+}
+
+.email-subject {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.email-snippet {
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.email-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.ai-label {
+    padding: 3px 8px;
+    background: #E3F2FD;
+    color: #1565C0;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 500;
+}
+
+.ai-label.urgent {
+    background: #FFEBEE;
+    color: #C62828;
+}
+
+.ai-label.potential {
+    background: #F3E5F5;
+    color: #7B1FA2;
+}
+
+.category-tag {
+    padding: 3px 8px;
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
+    border-radius: 10px;
+    font-size: 11px;
+}
+
+/* 郵件內容面板 */
+.email-content-panel {
+    background: var(--bg-primary);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: var(--shadow-md);
+    display: flex;
+    flex-direction: column;
+}
+
+.content-header {
+    padding: 20px;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.email-header-info {
+    flex: 1;
+}
+
+.email-title {
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 12px;
+}
+
+.email-header-meta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.sender-avatar-large {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+}
+
+.email-address {
+    color: var(--text-secondary);
+    font-weight: 400;
+    font-size: 14px;
+}
+
+.email-timestamp {
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.email-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.action-btn {
+    padding: 8px;
+    border: 1px solid var(--border-color);
+    background: white;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: var(--transition-fast);
+}
+
+.action-btn:hover {
+    background: var(--bg-secondary);
+}
+
+.email-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+}
+
+.email-content {
+    line-height: 1.8;
+    margin-bottom: 24px;
+}
+
+.email-content p {
+    margin-bottom: 12px;
+}
+
+.email-content ul {
+    margin-left: 20px;
+    margin-bottom: 12px;
+}
+
+.email-content li {
+    margin-bottom: 6px;
+}
+
+/* AI 洞察面板 */
+.ai-insights-box {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 12px;
+    padding: 20px;
+    color: white;
+    margin-bottom: 20px;
+}
+
+.insights-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.insights-header h4 {
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.insights-content {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.insight-item {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 12px;
+    display: flex;
+    gap: 12px;
+}
+
+.insight-item.priority-high {
+    background: rgba(255, 107, 107, 0.2);
+    border-left: 3px solid #FF6B6B;
+}
+
+.insight-icon {
+    font-size: 24px;
+}
+
+.insight-item strong {
+    display: block;
+    margin-bottom: 4px;
+}
+
+.insight-item p {
+    font-size: 13px;
+    opacity: 0.9;
+}
+
+.suggestion-list {
+    margin-top: 8px;
+    margin-left: 0;
+    list-style: none;
+}
+
+.suggestion-list li {
+    padding-left: 16px;
+    position: relative;
+    margin-bottom: 4px;
+    font-size: 13px;
+}
+
+.suggestion-list li::before {
+    content: '✓';
+    position: absolute;
+    left: 0;
+    color: #4CAF50;
+}
+
+.generate-reply-btn {
+    width: 100%;
+    padding: 12px;
+    background: white;
+    color: #667eea;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 12px;
+    transition: var(--transition-fast);
+}
+
+.generate-reply-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+/* 快速回覆區 */
+.quick-reply-section {
+    border-top: 1px solid var(--border-color);
+    padding: 16px;
+}
+
+.reply-tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 12px;
+}
+
+.reply-tab {
+    padding: 8px 16px;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    font-size: 14px;
+    font-weight: 500;
+    transition: var(--transition-fast);
+}
+
+.reply-tab:hover {
+    color: var(--text-primary);
+}
+
+.reply-tab.active {
+    color: var(--primary-color);
+    border-bottom-color: var(--primary-color);
+}
+
+.reply-input-area {
+    background: var(--bg-tertiary);
+    border-radius: 8px;
+    padding: 12px;
+}
+
+.input-toolbar {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.toolbar-btn {
+    padding: 6px;
+    border: 1px solid var(--border-color);
+    background: white;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: var(--transition-fast);
+}
+
+.toolbar-btn:hover {
+    background: var(--bg-secondary);
+}
+
+.reply-textarea {
+    width: 100%;
+    min-height: 100px;
+    padding: 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 14px;
+    resize: vertical;
+    margin-bottom: 12px;
+}
+
+.reply-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.ai-suggestions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.suggestion-chip {
+    padding: 6px 12px;
+    background: white;
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: var(--transition-fast);
+}
+
+.suggestion-chip:hover {
+    background: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+}
+
+.send-btn {
+    padding: 10px 24px;
+    border: none;
+    background: var(--primary-color);
+    color: white;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: var(--transition-fast);
+}
+
+.send-btn:hover {
+    background: var(--primary-hover);
+    transform: translateY(-1px);
+}
+
+/* ===================================
+   第三層：AI 助手面板
+   =================================== */
+.ai-assistant-layer {
+    background: var(--bg-primary);
+    border-radius: 12px;
+    box-shadow: var(--shadow-md);
+    overflow: hidden;
+}
+
+.assistant-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    background: linear-gradient(135deg, #FF6B6B 0%, #FF8E53 100%);
+    color: white;
+}
+
+.assistant-header h2 {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 18px;
+}
+
+.toggle-btn {
+    padding: 8px;
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    border-radius: 6px;
+    color: white;
+    cursor: pointer;
+    transition: var(--transition-fast);
+}
+
+.toggle-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.assistant-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border-color);
+    padding: 0 20px;
+    background: var(--bg-tertiary);
+}
+
+.assistant-tab {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 20px;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    border-bottom: 2px solid transparent;
+    transition: var(--transition-fast);
+}
+
+.assistant-tab:hover {
+    color: var(--text-primary);
+    background: rgba(0, 0, 0, 0.02);
+}
+
+.assistant-tab.active {
+    color: var(--primary-color);
+    border-bottom-color: var(--primary-color);
+}
+
+.assistant-panel {
+    display: none;
+    padding: 20px;
+    max-height: 600px;
+    overflow-y: auto;
+}
+
+.assistant-panel.active {
+    display: block;
+}
+
+.panel-section {
+    margin-bottom: 32px;
+}
+
+.panel-section h3 {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 16px;
+    color: var(--text-primary);
+}
+
+/* 商品管理 PM 面板 */
+.pipeline-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 16px;
+}
+
+.pipeline-card {
+    background: var(--bg-tertiary);
+    border-radius: 10px;
+    padding: 16px;
+    border: 1px solid var(--border-color);
+}
+
+.pipeline-card .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.pipeline-card h4 {
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.status-badge {
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.status-badge.active {
+    background: #E8F5E9;
+    color: #2E7D32;
+}
+
+.status-badge.planning {
+    background: #FFF8E1;
+    color: #F57C00;
+}
+
+.card-stats {
+    display: flex;
+    justify-content: space-around;
+    margin-bottom: 16px;
+}
+
+.stat {
+    text-align: center;
+}
+
+.stat-label {
+    font-size: 11px;
+    color: var(--text-secondary);
+    display: block;
+    margin-bottom: 4px;
+}
+
+.stat-value {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.stat-value.urgent {
+    color: var(--error-color);
+}
+
+.progress-bar {
+    height: 6px;
+    background: var(--bg-secondary);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 8px;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary-color), var(--success-color));
+    transition: width var(--transition-slow);
+}
+
+.conversion-rate {
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.trend {
+    font-weight: 600;
+    margin-left: 8px;
+}
+
+.trend.up {
+    color: var(--success-color);
+}
+
+.trend.down {
+    color: var(--error-color);
+}
+
+.insights-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+}
+
+.insight-card {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px;
+    background: var(--bg-tertiary);
+    border-radius: 10px;
+    border: 1px solid var(--border-color);
+}
+
+.insight-icon {
+    font-size: 32px;
+}
+
+.insight-data {
+    flex: 1;
+}
+
+.insight-label {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+}
+
+.insight-value {
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+
+.insight-change {
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.insight-change.positive {
+    color: var(--success-color);
+}
+
+.insight-change.negative {
+    color: var(--error-color);
+}
+
+.action-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.action-item {
+    display: flex;
+    gap: 12px;
+    padding: 16px;
+    background: var(--bg-tertiary);
+    border-radius: 10px;
+    border-left: 3px solid var(--border-color);
+}
+
+.action-item.priority-high {
+    border-left-color: var(--error-color);
+    background: #FFEBEE;
+}
+
+.action-item.priority-medium {
+    border-left-color: var(--warning-color);
+    background: #FFF8E1;
+}
+
+.action-item.priority-low {
+    border-left-color: var(--primary-color);
+    background: #E3F2FD;
+}
+
+.action-icon {
+    font-size: 24px;
+}
+
+.action-content {
+    flex: 1;
+}
+
+.action-content h4 {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 6px;
+}
+
+.action-content p {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-bottom: 10px;
+}
+
+.action-btn-small {
+    padding: 6px 14px;
+    border: 1px solid var(--border-color);
+    background: white;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition-fast);
+}
+
+.action-btn-small:hover {
+    background: var(--bg-secondary);
+}
+
+.action-btn-small.primary {
+    background: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+}
+
+.action-btn-small.primary:hover {
+    background: var(--primary-hover);
+}
+
+.action-btn-small.secondary {
+    background: var(--bg-secondary);
+}
+
+/* 郵件追蹤面板 */
+.tracking-timeline {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.timeline-item {
+    display: flex;
+    gap: 12px;
+    position: relative;
+}
+
+.timeline-item:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    left: 11px;
+    top: 32px;
+    width: 2px;
+    height: calc(100% + 4px);
+    background: var(--border-color);
+}
+
+.timeline-marker {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--bg-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 600;
+    flex-shrink: 0;
+}
+
+.timeline-item.completed .timeline-marker {
+    background: var(--success-color);
+    color: white;
+}
+
+.timeline-item.pending .timeline-marker {
+    background: var(--warning-color);
+    color: white;
+}
+
+.timeline-content {
+    flex: 1;
+    padding-bottom: 8px;
+}
+
+.timeline-content h4 {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.timeline-content p {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-bottom: 2px;
+}
+
+.timeline-time {
+    font-size: 12px;
+    color: var(--text-tertiary);
+}
+
+.engagement-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.stat-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.stat-row .stat-label {
+    min-width: 80px;
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.stat-bar {
+    flex: 1;
+    height: 8px;
+    background: var(--bg-secondary);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.stat-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary-color), var(--success-color));
+    transition: width var(--transition-slow);
+}
+
+.stat-percentage {
+    min-width: 60px;
+    text-align: right;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.behavior-insights {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.behavior-item {
+    display: flex;
+    gap: 12px;
+    padding: 12px;
+    background: var(--bg-tertiary);
+    border-radius: 8px;
+}
+
+.behavior-item.ai-prediction {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.behavior-icon {
+    font-size: 20px;
+}
+
+.behavior-item p {
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+/* 自動跟催面板 */
+.followup-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.followup-item {
+    background: var(--bg-tertiary);
+    border-radius: 10px;
+    padding: 16px;
+    border: 1px solid var(--border-color);
+}
+
+.followup-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.followup-contact {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.followup-contact img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+}
+
+.followup-contact h4 {
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.followup-contact p {
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.followup-status {
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.followup-status.active {
+    background: #E8F5E9;
+    color: #2E7D32;
+}
+
+.followup-status.urgent {
+    background: #FFEBEE;
+    color: #C62828;
+}
+
+.followup-status.scheduled {
+    background: #E3F2FD;
+    color: #1565C0;
+}
+
+.followup-timeline {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.followup-step {
+    display: flex;
+    gap: 12px;
+    position: relative;
+}
+
+.step-number {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--bg-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 600;
+    flex-shrink: 0;
+}
+
+.followup-step.completed .step-number {
+    background: var(--success-color);
+    color: white;
+}
+
+.followup-step.current .step-number {
+    background: var(--primary-color);
+    color: white;
+}
+
+.followup-step.overdue .step-number {
+    background: var(--error-color);
+    color: white;
+}
+
+.step-content {
+    flex: 1;
+}
+
+.step-content p {
+    font-size: 13px;
+    margin-bottom: 4px;
+}
+
+.step-time {
+    font-size: 12px;
+    color: var(--text-secondary);
+    display: block;
+    margin-bottom: 8px;
+}
+
+.step-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.step-btn {
+    padding: 4px 12px;
+    border: 1px solid var(--border-color);
+    background: white;
+    border-radius: 4px;
+    font-size: 11px;
+    cursor: pointer;
+    transition: var(--transition-fast);
+}
+
+.step-btn:hover {
+    background: var(--bg-secondary);
+}
+
+.step-btn.urgent {
+    background: var(--error-color);
+    color: white;
+    border-color: var(--error-color);
+}
+
+.followup-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+}
+
+.followup-summary {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.auto-followup-settings {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.setting-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px;
+    background: var(--bg-tertiary);
+    border-radius: 8px;
+}
+
+.setting-label h4 {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.setting-label p {
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+/* Toggle Switch */
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 48px;
+    height: 24px;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--bg-secondary);
+    border-radius: 24px;
+    transition: var(--transition-fast);
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background: white;
+    border-radius: 50%;
+    transition: var(--transition-fast);
+}
+
+input:checked + .slider {
+    background: var(--primary-color);
+}
+
+input:checked + .slider:before {
+    transform: translateX(24px);
+}
+
+.followup-analytics {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 16px;
+}
+
+.analytics-card {
+    background: var(--bg-tertiary);
+    border-radius: 10px;
+    padding: 16px;
+    border: 1px solid var(--border-color);
+}
+
+.analytics-card h4 {
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 16px;
+}
+
+.analytics-stats {
+    display: flex;
+    justify-content: space-around;
+}
+
+.stat-item {
+    text-align: center;
+}
+
+.stat-number {
+    display: block;
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--primary-color);
+    margin-bottom: 4px;
+}
+
+.stat-item .stat-label {
+    font-size: 11px;
+    color: var(--text-secondary);
+}
+
+.best-times {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.time-slot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px;
+    background: white;
+    border-radius: 8px;
+}
+
+.time-icon {
+    font-size: 20px;
+}
+
+.time-label {
+    flex: 1;
+    font-size: 13px;
+    margin-left: 12px;
+}
+
+.time-rate {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--success-color);
+}
+
+.create-followup-btn {
+    width: 100%;
+    padding: 14px;
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: var(--transition-fast);
+}
+
+.create-followup-btn:hover {
+    background: var(--primary-hover);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+/* ===================================
+   底部狀態列
+   =================================== */
+.status-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 24px;
+    background: var(--bg-primary);
+    border-top: 1px solid var(--border-color);
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.status-left,
+.status-right {
+    display: flex;
+    gap: 20px;
+}
+
+.status-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* ===================================
+   響應式設計
+   =================================== */
+@media (max-width: 1400px) {
+    .contacts-grid {
+        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    }
+}
+
+@media (max-width: 1200px) {
+    .email-chat-layer {
+        grid-template-columns: 300px 1fr;
+    }
+
+    .pipeline-cards,
+    .insights-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 992px) {
+    .main-container {
+        padding: 12px;
+    }
+
+    .email-chat-layer {
+        grid-template-columns: 1fr;
+    }
+
+    .email-list-panel {
+        max-height: 400px;
+    }
+
+    .contacts-grid {
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    }
+}
+
+@media (max-width: 768px) {
+    .main-nav {
+        display: none;
+    }
+
+    .top-header {
+        padding: 12px 16px;
+    }
+
+    .contacts-grid {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    }
+
+    .contact-avatar {
+        width: 60px;
+        height: 60px;
+    }
+
+    .ai-suggestions {
+        display: none;
+    }
+}
+
+@media (max-width: 576px) {
+    .contacts-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .filter-tabs {
+        flex-wrap: wrap;
+    }
+
+    .status-bar {
+        flex-direction: column;
+        gap: 8px;
+        align-items: flex-start;
+    }
+
+    .status-left,
+    .status-right {
+        flex-wrap: wrap;
+    }
+}
+
+/* ===================================
+   滾動條樣式
+   =================================== */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--bg-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--text-tertiary);
+}
+
+/* ===================================
+   動畫
+   =================================== */
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.contact-card,
+.email-item,
+.action-item {
+    animation: slideIn var(--transition-normal) ease-out;
+}
+
+/* ===================================
+   工具類
+   =================================== */
+.hidden {
+    display: none !important;
+}
+
+.fade-in {
+    animation: fadeIn var(--transition-normal) ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+    </style>
+</head>
+<body>
+    <!-- 頂部導航欄 -->
+    <header class="top-header">
+        <div class="logo">
+            <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+                <rect width="32" height="32" rx="6" fill="#0078D4"/>
+                <path d="M16 8L8 12v8c0 5 8 10 8 10s8-5 8-10v-8l-8-4z" fill="white"/>
+            </svg>
+            <h1>Outlook AI</h1>
+        </div>
+        <nav class="main-nav">
+            <button class="nav-btn active" data-view="inbox">
+                <svg width="20" height="20" viewBox="0 0 20 20"><path d="M3 4h14v12H3V4z" stroke="currentColor" fill="none"/></svg>
+                收件箱
+            </button>
+            <button class="nav-btn" data-view="sent">
+                <svg width="20" height="20" viewBox="0 0 20 20"><path d="M3 10l14-6v12L3 10z" fill="currentColor"/></svg>
+                已發送
+            </button>
+            <button class="nav-btn" data-view="ai-insights">
+                <svg width="20" height="20" viewBox="0 0 20 20"><circle cx="10" cy="10" r="8" stroke="currentColor" fill="none"/><path d="M10 6v4l3 3" stroke="currentColor" fill="none"/></svg>
+                AI 洞察
+            </button>
+        </nav>
+        <div class="user-profile">
+            <img src="https://i.pravatar.cc/40?img=12" alt="User" class="user-avatar">
+            <span class="user-name">Amber</span>
+        </div>
+    </header>
+
+    <!-- 主要內容區 -->
+    <main class="main-container">
+        <!-- 第一層：今日收件人大頭像面板 -->
+        <section class="layer-1 contacts-layer">
+            <div class="layer-header">
+                <h2>今日聯絡人</h2>
+                <div class="filter-tabs">
+                    <button class="tab active" data-filter="pending">待處理 <span class="badge">8</span></button>
+                    <button class="tab" data-filter="completed">已完成 <span class="badge">12</span></button>
+                </div>
+            </div>
+
+            <div class="contacts-grid" id="contactsGrid">
+                <!-- 待處理的聯絡人 -->
+                <div class="contact-card pending" data-contact-id="1" draggable="true">
+                    <div class="contact-avatar-wrapper">
+                        <img src="https://i.pravatar.cc/80?img=1" alt="Contact" class="contact-avatar">
+                        <span class="status-indicator urgent"></span>
+                        <span class="unread-count">3</span>
+                    </div>
+                    <div class="contact-info">
+                        <h3 class="contact-name">王小明</h3>
+                        <p class="contact-company">ABC 科技</p>
+                        <div class="contact-tags">
+                            <span class="tag priority-high">高優先級</span>
+                            <span class="tag ai-suggested">AI 建議跟進</span>
+                        </div>
+                    </div>
+                    <div class="ai-score" data-score="95">
+                        <svg class="score-ring" width="50" height="50">
+                            <circle cx="25" cy="25" r="20" fill="none" stroke="#e0e0e0" stroke-width="4"/>
+                            <circle cx="25" cy="25" r="20" fill="none" stroke="#00C853" stroke-width="4" stroke-dasharray="125.6" stroke-dashoffset="6.28" transform="rotate(-90 25 25)"/>
+                        </svg>
+                        <span class="score-text">95</span>
+                    </div>
+                </div>
+
+                <div class="contact-card pending" data-contact-id="2" draggable="true">
+                    <div class="contact-avatar-wrapper">
+                        <img src="https://i.pravatar.cc/80?img=5" alt="Contact" class="contact-avatar">
+                        <span class="status-indicator important"></span>
+                        <span class="unread-count">2</span>
+                    </div>
+                    <div class="contact-info">
+                        <h3 class="contact-name">李美玲</h3>
+                        <p class="contact-company">XYZ 貿易</p>
+                        <div class="contact-tags">
+                            <span class="tag priority-medium">中優先級</span>
+                            <span class="tag deadline">今日截止</span>
+                        </div>
+                    </div>
+                    <div class="ai-score" data-score="78">
+                        <svg class="score-ring" width="50" height="50">
+                            <circle cx="25" cy="25" r="20" fill="none" stroke="#e0e0e0" stroke-width="4"/>
+                            <circle cx="25" cy="25" r="20" fill="none" stroke="#FFC107" stroke-width="4" stroke-dasharray="125.6" stroke-dashoffset="27.6" transform="rotate(-90 25 25)"/>
+                        </svg>
+                        <span class="score-text">78</span>
+                    </div>
+                </div>
+
+                <div class="contact-card pending" data-contact-id="3" draggable="true">
+                    <div class="contact-avatar-wrapper">
+                        <img src="https://i.pravatar.cc/80?img=8" alt="Contact" class="contact-avatar">
+                        <span class="status-indicator normal"></span>
+                        <span class="unread-count">1</span>
+                    </div>
+                    <div class="contact-info">
+                        <h3 class="contact-name">張建國</h3>
+                        <p class="contact-company">DEF 企業</p>
+                        <div class="contact-tags">
+                            <span class="tag priority-low">低優先級</span>
+                            <span class="tag follow-up">待跟進</span>
+                        </div>
+                    </div>
+                    <div class="ai-score" data-score="62">
+                        <svg class="score-ring" width="50" height="50">
+                            <circle cx="25" cy="25" r="20" fill="none" stroke="#e0e0e0" stroke-width="4"/>
+                            <circle cx="25" cy="25" r="20" fill="none" stroke="#2196F3" stroke-width="4" stroke-dasharray="125.6" stroke-dashoffset="47.7" transform="rotate(-90 25 25)"/>
+                        </svg>
+                        <span class="score-text">62</span>
+                    </div>
+                </div>
+
+                <div class="contact-card pending" data-contact-id="4" draggable="true">
+                    <div class="contact-avatar-wrapper">
+                        <img src="https://i.pravatar.cc/80?img=3" alt="Contact" class="contact-avatar">
+                        <span class="status-indicator urgent"></span>
+                        <span class="unread-count">5</span>
+                    </div>
+                    <div class="contact-info">
+                        <h3 class="contact-name">陳雅婷</h3>
+                        <p class="contact-company">GHI 集團</p>
+                        <div class="contact-tags">
+                            <span class="tag priority-high">高優先級</span>
+                            <span class="tag new-customer">新客戶</span>
+                        </div>
+                    </div>
+                    <div class="ai-score" data-score="88">
+                        <svg class="score-ring" width="50" height="50">
+                            <circle cx="25" cy="25" r="20" fill="none" stroke="#e0e0e0" stroke-width="4"/>
+                            <circle cx="25" cy="25" r="20" fill="none" stroke="#00C853" stroke-width="4" stroke-dasharray="125.6" stroke-dashoffset="15.1" transform="rotate(-90 25 25)"/>
+                        </svg>
+                        <span class="score-text">88</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 已完成區域（拖放目標） -->
+            <div class="completed-zone" id="completedZone">
+                <div class="zone-header">
+                    <svg width="24" height="24" viewBox="0 0 24 24">
+                        <path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z" fill="#00C853"/>
+                    </svg>
+                    <span>拖放到此處標記為已完成</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- 第二層：郵件列表 + 聊天整合介面 -->
+        <section class="layer-2 email-chat-layer">
+            <!-- 郵件列表 -->
+            <div class="email-list-panel">
+                <div class="panel-header">
+                    <h2>郵件列表</h2>
+                    <div class="search-box">
+                        <svg width="16" height="16" viewBox="0 0 16 16">
+                            <circle cx="6" cy="6" r="5" stroke="currentColor" fill="none"/>
+                            <path d="M10 10l4 4" stroke="currentColor"/>
+                        </svg>
+                        <input type="text" placeholder="搜尋郵件..." id="emailSearch">
+                    </div>
+                </div>
+
+                <div class="email-list" id="emailList">
+                    <div class="email-item unread selected" data-email-id="1" data-contact-id="1">
+                        <div class="email-sender">
+                            <img src="https://i.pravatar.cc/40?img=1" alt="Sender" class="sender-avatar">
+                            <div class="sender-info">
+                                <h4>王小明</h4>
+                                <span class="email-time">上午 9:30</span>
+                            </div>
+                        </div>
+                        <div class="email-preview">
+                            <h5 class="email-subject">關於產品報價的討論</h5>
+                            <p class="email-snippet">您好，我們對貴公司的產品很感興趣，想了解更詳細的報價資訊...</p>
+                        </div>
+                        <div class="email-meta">
+                            <span class="ai-label">AI 分析: 高意向客戶</span>
+                            <span class="category-tag">報價諮詢</span>
+                        </div>
+                    </div>
+
+                    <div class="email-item unread" data-email-id="2" data-contact-id="1">
+                        <div class="email-sender">
+                            <img src="https://i.pravatar.cc/40?img=1" alt="Sender" class="sender-avatar">
+                            <div class="sender-info">
+                                <h4>王小明</h4>
+                                <span class="email-time">上午 10:15</span>
+                            </div>
+                        </div>
+                        <div class="email-preview">
+                            <h5 class="email-subject">Re: 關於產品報價的討論</h5>
+                            <p class="email-snippet">補充一下，我們預計採購數量在 500-1000 件之間...</p>
+                        </div>
+                        <div class="email-meta">
+                            <span class="ai-label urgent">需要立即回覆</span>
+                            <span class="category-tag">訂單確認</span>
+                        </div>
+                    </div>
+
+                    <div class="email-item" data-email-id="3" data-contact-id="2">
+                        <div class="email-sender">
+                            <img src="https://i.pravatar.cc/40?img=5" alt="Sender" class="sender-avatar">
+                            <div class="sender-info">
+                                <h4>李美玲</h4>
+                                <span class="email-time">昨天</span>
+                            </div>
+                        </div>
+                        <div class="email-preview">
+                            <h5 class="email-subject">物流配送時間確認</h5>
+                            <p class="email-snippet">請確認本批貨物的配送時間，我們這邊需要提前安排...</p>
+                        </div>
+                        <div class="email-meta">
+                            <span class="ai-label">建議今日跟進</span>
+                            <span class="category-tag">物流</span>
+                        </div>
+                    </div>
+
+                    <div class="email-item unread" data-email-id="4" data-contact-id="4">
+                        <div class="email-sender">
+                            <img src="https://i.pravatar.cc/40?img=3" alt="Sender" class="sender-avatar">
+                            <div class="sender-info">
+                                <h4>陳雅婷</h4>
+                                <span class="email-time">上午 11:20</span>
+                            </div>
+                        </div>
+                        <div class="email-preview">
+                            <h5 class="email-subject">新產品合作機會</h5>
+                            <p class="email-snippet">我們是 GHI 集團的採購經理，看到貴公司的新產品線...</p>
+                        </div>
+                        <div class="email-meta">
+                            <span class="ai-label potential">潛在大客戶</span>
+                            <span class="category-tag">商務合作</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 郵件內容 + 聊天整合 -->
+            <div class="email-content-panel">
+                <div class="content-header">
+                    <div class="email-header-info">
+                        <h3 class="email-title">關於產品報價的討論</h3>
+                        <div class="email-header-meta">
+                            <img src="https://i.pravatar.cc/40?img=1" alt="Sender" class="sender-avatar-large">
+                            <div>
+                                <h4>王小明 <span class="email-address">&lt;wangxm@abc-tech.com&gt;</span></h4>
+                                <p class="email-timestamp">今天上午 9:30</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="email-actions">
+                        <button class="action-btn" title="回覆">
+                            <svg width="20" height="20" viewBox="0 0 20 20"><path d="M10 15l-5-5h3V5h4v5h3l-5 5z" fill="currentColor"/></svg>
+                        </button>
+                        <button class="action-btn" title="轉發">
+                            <svg width="20" height="20" viewBox="0 0 20 20"><path d="M15 10l5 5-5 5v-3H5v-4h10v-3z" fill="currentColor"/></svg>
+                        </button>
+                        <button class="action-btn" title="封存">
+                            <svg width="20" height="20" viewBox="0 0 20 20"><rect x="3" y="5" width="14" height="10" stroke="currentColor" fill="none"/></svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 郵件內容 -->
+                <div class="email-body">
+                    <div class="email-content">
+                        <p>您好 Amber，</p>
+                        <p>我們是 ABC 科技公司的採購部門。最近在市場調查中注意到貴公司的產品線，特別是新推出的智能設備系列，我們非常感興趣。</p>
+                        <p>能否請您提供以下資訊：</p>
+                        <ul>
+                            <li>產品型號 X100 的詳細規格和報價</li>
+                            <li>大量採購的折扣方案</li>
+                            <li>交貨期和售後服務條款</li>
+                        </ul>
+                        <p>我們預計在本月底前做出採購決定，期待您的回覆。</p>
+                        <p>謝謝！<br>王小明<br>ABC 科技採購部</p>
+                    </div>
+
+                    <!-- AI 洞察面板 -->
+                    <div class="ai-insights-box">
+                        <div class="insights-header">
+                            <svg width="20" height="20" viewBox="0 0 20 20">
+                                <path d="M10 2l2 6h6l-5 4 2 6-5-4-5 4 2-6-5-4h6l2-6z" fill="#FFD700"/>
+                            </svg>
+                            <h4>AI 智能分析</h4>
+                        </div>
+                        <div class="insights-content">
+                            <div class="insight-item priority-high">
+                                <span class="insight-icon">🎯</span>
+                                <div>
+                                    <strong>客戶意向度: 95%</strong>
+                                    <p>這是一個高意向的潛在客戶，建議在 2 小時內回覆</p>
+                                </div>
+                            </div>
+                            <div class="insight-item">
+                                <span class="insight-icon">💼</span>
+                                <div>
+                                    <strong>商機價值: 預估 $50,000 - $100,000</strong>
+                                    <p>根據採購數量和產品型號分析</p>
+                                </div>
+                            </div>
+                            <div class="insight-item">
+                                <span class="insight-icon">⏰</span>
+                                <div>
+                                    <strong>建議跟進時間: 今天下午 2:00</strong>
+                                    <p>對方通常在下午較活躍</p>
+                                </div>
+                            </div>
+                            <div class="insight-item">
+                                <span class="insight-icon">📋</span>
+                                <div>
+                                    <strong>建議回覆重點</strong>
+                                    <ul class="suggestion-list">
+                                        <li>提供 X100 詳細規格文件</li>
+                                        <li>說明批量採購折扣（500+ 件享 15% 折扣）</li>
+                                        <li>承諾 3-5 個工作日交貨</li>
+                                        <li>強調一年保固和技術支援</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        <button class="generate-reply-btn">
+                            <svg width="16" height="16" viewBox="0 0 16 16">
+                                <path d="M8 2v12M2 8h12" stroke="currentColor" stroke-width="2"/>
+                            </svg>
+                            AI 生成回覆草稿
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 快速回覆 / 聊天區 -->
+                <div class="quick-reply-section">
+                    <div class="reply-tabs">
+                        <button class="reply-tab active" data-mode="reply">回覆</button>
+                        <button class="reply-tab" data-mode="chat">即時聊天</button>
+                        <button class="reply-tab" data-mode="template">快速範本</button>
+                    </div>
+                    <div class="reply-input-area">
+                        <div class="input-toolbar">
+                            <button class="toolbar-btn" title="AI 建議">
+                                <svg width="18" height="18" viewBox="0 0 18 18">
+                                    <circle cx="9" cy="9" r="7" stroke="currentColor" fill="none"/>
+                                    <path d="M9 5v4l3 3" stroke="currentColor" fill="none"/>
+                                </svg>
+                            </button>
+                            <button class="toolbar-btn" title="插入範本">
+                                <svg width="18" height="18" viewBox="0 0 18 18">
+                                    <rect x="3" y="3" width="12" height="12" stroke="currentColor" fill="none"/>
+                                </svg>
+                            </button>
+                            <button class="toolbar-btn" title="附件">
+                                <svg width="18" height="18" viewBox="0 0 18 18">
+                                    <path d="M10 2v10a3 3 0 0 1-6 0V4" stroke="currentColor" fill="none"/>
+                                </svg>
+                            </button>
+                        </div>
+                        <textarea class="reply-textarea" placeholder="輸入回覆內容... (AI 會自動分析您的語氣和內容)"></textarea>
+                        <div class="reply-actions">
+                            <div class="ai-suggestions">
+                                <span class="suggestion-chip">📊 附加報價單</span>
+                                <span class="suggestion-chip">📅 安排會議</span>
+                                <span class="suggestion-chip">🎁 提供優惠</span>
+                            </div>
+                            <button class="send-btn primary">
+                                <svg width="20" height="20" viewBox="0 0 20 20">
+                                    <path d="M2 10l16-8v16L2 10z" fill="white"/>
+                                </svg>
+                                發送
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 第三層：AI 助手面板 -->
+        <section class="layer-3 ai-assistant-layer">
+            <div class="assistant-header">
+                <h2>
+                    <svg width="24" height="24" viewBox="0 0 24 24">
+                        <path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5z" fill="#FF6B6B"/>
+                        <circle cx="12" cy="12" r="3" fill="white"/>
+                    </svg>
+                    AI 智能助手
+                </h2>
+                <button class="toggle-btn" id="toggleAiPanel">
+                    <svg width="20" height="20" viewBox="0 0 20 20">
+                        <path d="M5 8l5 5 5-5" stroke="currentColor" fill="none" stroke-width="2"/>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="assistant-tabs">
+                <button class="assistant-tab active" data-panel="merchandising">
+                    <svg width="20" height="20" viewBox="0 0 20 20">
+                        <rect x="3" y="3" width="14" height="14" stroke="currentColor" fill="none"/>
+                        <path d="M7 3v4M13 3v4M3 7h14" stroke="currentColor"/>
+                    </svg>
+                    商品管理 PM
+                </button>
+                <button class="assistant-tab" data-panel="tracking">
+                    <svg width="20" height="20" viewBox="0 0 20 20">
+                        <circle cx="10" cy="10" r="7" stroke="currentColor" fill="none"/>
+                        <path d="M10 6v4l3 3" stroke="currentColor"/>
+                    </svg>
+                    郵件追蹤
+                </button>
+                <button class="assistant-tab" data-panel="followup">
+                    <svg width="20" height="20" viewBox="0 0 20 20">
+                        <path d="M10 2v8l5 3" stroke="currentColor" fill="none"/>
+                        <circle cx="10" cy="10" r="8" stroke="currentColor" fill="none"/>
+                    </svg>
+                    自動跟催
+                </button>
+            </div>
+
+            <!-- Merchandising PM 面板 -->
+            <div class="assistant-panel active" id="merchandisingPanel">
+                <div class="panel-section">
+                    <h3>📦 產品管道追蹤</h3>
+                    <div class="pipeline-cards">
+                        <div class="pipeline-card">
+                            <div class="card-header">
+                                <h4>X100 智能設備</h4>
+                                <span class="status-badge active">進行中</span>
+                            </div>
+                            <div class="card-stats">
+                                <div class="stat">
+                                    <span class="stat-label">潛在客戶</span>
+                                    <span class="stat-value">12</span>
+                                </div>
+                                <div class="stat">
+                                    <span class="stat-label">報價已發</span>
+                                    <span class="stat-value">8</span>
+                                </div>
+                                <div class="stat">
+                                    <span class="stat-label">等待回覆</span>
+                                    <span class="stat-value urgent">5</span>
+                                </div>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 65%;"></div>
+                            </div>
+                            <p class="conversion-rate">轉換率: 65% <span class="trend up">↑ 12%</span></p>
+                        </div>
+
+                        <div class="pipeline-card">
+                            <div class="card-header">
+                                <h4>Y200 系列</h4>
+                                <span class="status-badge planning">規劃中</span>
+                            </div>
+                            <div class="card-stats">
+                                <div class="stat">
+                                    <span class="stat-label">潛在客戶</span>
+                                    <span class="stat-value">7</span>
+                                </div>
+                                <div class="stat">
+                                    <span class="stat-label">報價已發</span>
+                                    <span class="stat-value">3</span>
+                                </div>
+                                <div class="stat">
+                                    <span class="stat-label">等待回覆</span>
+                                    <span class="stat-value">2</span>
+                                </div>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 42%;"></div>
+                            </div>
+                            <p class="conversion-rate">轉換率: 42% <span class="trend down">↓ 5%</span></p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel-section">
+                    <h3>📊 本週銷售洞察</h3>
+                    <div class="insights-grid">
+                        <div class="insight-card">
+                            <div class="insight-icon">💰</div>
+                            <div class="insight-data">
+                                <p class="insight-label">預估成交額</p>
+                                <h4 class="insight-value">$285,000</h4>
+                                <span class="insight-change positive">+23% vs 上週</span>
+                            </div>
+                        </div>
+                        <div class="insight-card">
+                            <div class="insight-icon">📈</div>
+                            <div class="insight-data">
+                                <p class="insight-label">回覆率</p>
+                                <h4 class="insight-value">78%</h4>
+                                <span class="insight-change positive">+5% vs 上週</span>
+                            </div>
+                        </div>
+                        <div class="insight-card">
+                            <div class="insight-icon">⏱️</div>
+                            <div class="insight-data">
+                                <p class="insight-label">平均回覆時間</p>
+                                <h4 class="insight-value">2.3 小時</h4>
+                                <span class="insight-change negative">+0.5h vs 上週</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel-section">
+                    <h3>🎯 AI 建議行動</h3>
+                    <div class="action-list">
+                        <div class="action-item priority-high">
+                            <div class="action-icon">⚡</div>
+                            <div class="action-content">
+                                <h4>立即跟進：王小明 - ABC 科技</h4>
+                                <p>客戶 2 小時前發送第二封詢問郵件，建議立即回覆以提高成交率</p>
+                                <button class="action-btn-small primary">立即處理</button>
+                            </div>
+                        </div>
+                        <div class="action-item priority-medium">
+                            <div class="action-icon">📅</div>
+                            <div class="action-content">
+                                <h4>今日跟進：李美玲 - XYZ 貿易</h4>
+                                <p>物流確認郵件已 1 天未回覆，今日截止日期</p>
+                                <button class="action-btn-small secondary">查看詳情</button>
+                            </div>
+                        </div>
+                        <div class="action-item priority-low">
+                            <div class="action-icon">💡</div>
+                            <div class="action-content">
+                                <h4>機會識別：3 個新的高價值客戶</h4>
+                                <p>AI 識別出 3 個符合您目標客戶畫像的新聯絡人</p>
+                                <button class="action-btn-small secondary">查看列表</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 郵件追蹤面板 -->
+            <div class="assistant-panel" id="trackingPanel">
+                <div class="panel-section">
+                    <h3>📧 郵件狀態追蹤</h3>
+                    <div class="tracking-timeline">
+                        <div class="timeline-item completed">
+                            <div class="timeline-marker">✓</div>
+                            <div class="timeline-content">
+                                <h4>郵件已發送</h4>
+                                <p>發送給: 王小明 (wangxm@abc-tech.com)</p>
+                                <span class="timeline-time">今天 上午 9:35</span>
+                            </div>
+                        </div>
+                        <div class="timeline-item completed">
+                            <div class="timeline-marker">✓</div>
+                            <div class="timeline-content">
+                                <h4>郵件已送達</h4>
+                                <p>成功送達收件人郵件伺服器</p>
+                                <span class="timeline-time">今天 上午 9:36</span>
+                            </div>
+                        </div>
+                        <div class="timeline-item completed">
+                            <div class="timeline-marker">✓</div>
+                            <div class="timeline-content">
+                                <h4>郵件已開啟</h4>
+                                <p>收件人已開啟郵件 (開啟 3 次)</p>
+                                <span class="timeline-time">今天 上午 10:12</span>
+                            </div>
+                        </div>
+                        <div class="timeline-item completed">
+                            <div class="timeline-marker">✓</div>
+                            <div class="timeline-content">
+                                <h4>連結已點擊</h4>
+                                <p>點擊了產品規格文件連結</p>
+                                <span class="timeline-time">今天 上午 10:15</span>
+                            </div>
+                        </div>
+                        <div class="timeline-item pending">
+                            <div class="timeline-marker">⏳</div>
+                            <div class="timeline-content">
+                                <h4>等待回覆</h4>
+                                <p>AI 預測回覆時間: 今天下午 2:00 - 4:00</p>
+                                <span class="timeline-time">預計回覆機率: 85%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel-section">
+                    <h3>📊 互動分析</h3>
+                    <div class="engagement-stats">
+                        <div class="stat-row">
+                            <span class="stat-label">開啟率</span>
+                            <div class="stat-bar">
+                                <div class="stat-bar-fill" style="width: 92%;"></div>
+                            </div>
+                            <span class="stat-percentage">92%</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">點擊率</span>
+                            <div class="stat-bar">
+                                <div class="stat-bar-fill" style="width: 68%;"></div>
+                            </div>
+                            <span class="stat-percentage">68%</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">回覆率</span>
+                            <div class="stat-bar">
+                                <div class="stat-bar-fill" style="width: 75%;"></div>
+                            </div>
+                            <span class="stat-percentage">75%</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">閱讀時間</span>
+                            <div class="stat-bar">
+                                <div class="stat-bar-fill" style="width: 85%;"></div>
+                            </div>
+                            <span class="stat-percentage">平均 2.5 分鐘</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel-section">
+                    <h3>🔍 客戶行為洞察</h3>
+                    <div class="behavior-insights">
+                        <div class="behavior-item">
+                            <span class="behavior-icon">👁️</span>
+                            <p><strong>王小明</strong>在上午 10:12 打開郵件，停留 3 分鐘 20 秒</p>
+                        </div>
+                        <div class="behavior-item">
+                            <span class="behavior-icon">🖱️</span>
+                            <p>點擊了<strong>產品規格 PDF</strong>連結，下載文件</p>
+                        </div>
+                        <div class="behavior-item">
+                            <span class="behavior-icon">🔄</span>
+                            <p>之後又回到郵件<strong>重複閱讀</strong>了 2 次</p>
+                        </div>
+                        <div class="behavior-item ai-prediction">
+                            <span class="behavior-icon">🤖</span>
+                            <p><strong>AI 預測：</strong>根據行為分析，客戶高度感興趣，建議在 2 小時內主動跟進</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 自動跟催面板 -->
+            <div class="assistant-panel" id="followupPanel">
+                <div class="panel-section">
+                    <h3>⏰ 自動跟催排程</h3>
+                    <div class="followup-list">
+                        <div class="followup-item active">
+                            <div class="followup-header">
+                                <div class="followup-contact">
+                                    <img src="https://i.pravatar.cc/40?img=1" alt="Contact">
+                                    <div>
+                                        <h4>王小明 - ABC 科技</h4>
+                                        <p>產品報價諮詢</p>
+                                    </div>
+                                </div>
+                                <span class="followup-status active">進行中</span>
+                            </div>
+                            <div class="followup-timeline">
+                                <div class="followup-step completed">
+                                    <span class="step-number">1</span>
+                                    <div class="step-content">
+                                        <p><strong>首次聯繫</strong> - 已完成</p>
+                                        <span class="step-time">今天 上午 9:35</span>
+                                    </div>
+                                </div>
+                                <div class="followup-step current">
+                                    <span class="step-number">2</span>
+                                    <div class="step-content">
+                                        <p><strong>第一次跟進</strong> - 進行中</p>
+                                        <span class="step-time">排程: 今天 下午 2:00</span>
+                                        <div class="step-actions">
+                                            <button class="step-btn">編輯</button>
+                                            <button class="step-btn">立即發送</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="followup-step pending">
+                                    <span class="step-number">3</span>
+                                    <div class="step-content">
+                                        <p><strong>第二次跟進</strong> - 待執行</p>
+                                        <span class="step-time">排程: 明天 上午 10:00</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="followup-actions">
+                                <button class="action-btn-small">暫停跟催</button>
+                                <button class="action-btn-small">標記已完成</button>
+                                <button class="action-btn-small primary">調整排程</button>
+                            </div>
+                        </div>
+
+                        <div class="followup-item">
+                            <div class="followup-header">
+                                <div class="followup-contact">
+                                    <img src="https://i.pravatar.cc/40?img=5" alt="Contact">
+                                    <div>
+                                        <h4>李美玲 - XYZ 貿易</h4>
+                                        <p>物流配送確認</p>
+                                    </div>
+                                </div>
+                                <span class="followup-status urgent">緊急</span>
+                            </div>
+                            <div class="followup-timeline">
+                                <div class="followup-step completed">
+                                    <span class="step-number">1</span>
+                                    <div class="step-content">
+                                        <p><strong>首次聯繫</strong> - 已完成</p>
+                                        <span class="step-time">昨天 下午 3:20</span>
+                                    </div>
+                                </div>
+                                <div class="followup-step overdue">
+                                    <span class="step-number">2</span>
+                                    <div class="step-content">
+                                        <p><strong>第一次跟進</strong> - 已逾期</p>
+                                        <span class="step-time">原定: 今天 上午 9:00</span>
+                                        <div class="step-actions">
+                                            <button class="step-btn urgent">立即處理</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="followup-item">
+                            <div class="followup-header">
+                                <div class="followup-contact">
+                                    <img src="https://i.pravatar.cc/40?img=8" alt="Contact">
+                                    <div>
+                                        <h4>張建國 - DEF 企業</h4>
+                                        <p>產品諮詢</p>
+                                    </div>
+                                </div>
+                                <span class="followup-status scheduled">已排程</span>
+                            </div>
+                            <div class="followup-summary">
+                                <p>下次跟進: 明天 下午 3:00</p>
+                                <button class="action-btn-small">查看詳情</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel-section">
+                    <h3>🤖 智能跟催設定</h3>
+                    <div class="auto-followup-settings">
+                        <div class="setting-item">
+                            <div class="setting-label">
+                                <h4>自動跟催規則</h4>
+                                <p>根據客戶類型和郵件內容自動設定跟催計劃</p>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" checked>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div class="setting-item">
+                            <div class="setting-label">
+                                <h4>智能時間優化</h4>
+                                <p>AI 根據客戶活躍時間自動調整發送時間</p>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" checked>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div class="setting-item">
+                            <div class="setting-label">
+                                <h4>自動內容生成</h4>
+                                <p>AI 自動生成個性化跟進郵件內容</p>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel-section">
+                    <h3>📈 跟催效果分析</h3>
+                    <div class="followup-analytics">
+                        <div class="analytics-card">
+                            <h4>本週跟催統計</h4>
+                            <div class="analytics-stats">
+                                <div class="stat-item">
+                                    <span class="stat-number">24</span>
+                                    <span class="stat-label">自動跟催郵件</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-number">18</span>
+                                    <span class="stat-label">成功獲得回覆</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-number">75%</span>
+                                    <span class="stat-label">回覆率</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="analytics-card">
+                            <h4>最佳跟進時機</h4>
+                            <div class="best-times">
+                                <div class="time-slot">
+                                    <span class="time-icon">🌅</span>
+                                    <span class="time-label">上午 9:00 - 11:00</span>
+                                    <span class="time-rate">82% 回覆率</span>
+                                </div>
+                                <div class="time-slot">
+                                    <span class="time-icon">🌆</span>
+                                    <span class="time-label">下午 2:00 - 4:00</span>
+                                    <span class="time-rate">78% 回覆率</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel-section">
+                    <button class="create-followup-btn">
+                        <svg width="20" height="20" viewBox="0 0 20 20">
+                            <path d="M10 4v12M4 10h12" stroke="white" stroke-width="2"/>
+                        </svg>
+                        建立新的跟催計劃
+                    </button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- 底部狀態列 -->
+    <footer class="status-bar">
+        <div class="status-left">
+            <span class="status-item">
+                <svg width="16" height="16" viewBox="0 0 16 16">
+                    <circle cx="8" cy="8" r="6" fill="#00C853"/>
+                </svg>
+                系統正常運行
+            </span>
+            <span class="status-item">最後同步: 剛剛</span>
+        </div>
+        <div class="status-right">
+            <span class="status-item">AI 處理中: 3 項任務</span>
+            <span class="status-item">今日處理: 28 封郵件</span>
+        </div>
+    </footer>
+
+    <script src="js/outlook-ai.js"></script>
+<script>
+// 演示數據
+const DEMO_EMAILS = [
+    {
+        id: "1",
+        from: { name: "王小明", address: "wang@abc-tech.com" },
+        subject: "關於產品報價的討論",
+        date: new Date(Date.now() - 2*3600000),
+        text: "您好 Amber，\n\n我們是 ABC 科技公司的採購部門。最近在市場調查中注意到貴公司的產品線，特別是新推出的智能設備系列，我們非常感興趣。\n\n能否請您提供以下資訊：\n- 產品型號 X100 的詳細規格和報價\n- 大量採購的折扣方案\n- 交貨期和售後服務條款\n\n我們預計採購數量在 500-1000 件之間，預算範圍在 $50,000-$100,000。希望能在本月底前做出採購決定。",
+        isRead: false,
+        priority: "high",
+        aiAnalysis: {
+            sentiment: "積極",
+            intent: "採購意向 95%",
+            urgency: "高 - 本月底截止",
+            value: "$50K-$100K",
+            keyPoints: ["產品型號 X100", "500-1000 件", "本月底決定"]
+        }
+    },
+    {
+        id: "2",
+        from: { name: "李美玲", address: "li@xyz-trade.com" },
+        subject: "物流配送時間確認",
+        date: new Date(Date.now() - 26*3600000),
+        text: "您好，\n\n請確認本批貨物的配送時間，我們這邊需要提前安排倉儲空間。\n\n訂單編號：#XYZ-2024-001\n數量：300 件\n\n這批貨物今日截止確認，麻煩儘快回覆。",
+        isRead: false,
+        priority: "urgent",
+        aiAnalysis: {
+            sentiment: "緊急",
+            intent: "訂單確認",
+            urgency: "緊急 - 今日截止",
+            value: "現有訂單",
+            keyPoints: ["訂單 #XYZ-2024-001", "300 件", "今日截止"]
+        }
+    },
+    {
+        id: "3",
+        from: { name: "陳雅婷", address: "chen@ghi-group.com" },
+        subject: "新產品合作機會",
+        date: new Date(Date.now() - 3*3600000),
+        text: "您好 Amber，\n\n我們是 GHI 集團的採購經理。看到貴公司最近推出的新產品線，我們認為有很好的合作機會。\n\nGHI 集團是業內領先的經銷商，每年採購額超過 $10M。我們想了解：\n- 是否有經銷商合作方案\n- 長期合作的價格優惠\n- 獨家代理的可能性",
+        isRead: false,
+        priority: "high",
+        aiAnalysis: {
+            sentiment: "非常積極",
+            intent: "戰略合作 98%",
+            urgency: "中",
+            value: "$10M+ 年度",
+            keyPoints: ["經銷商合作", "年採購額 $10M+", "獨家代理"]
+        }
+    },
+    {
+        id: "4",
+        from: { name: "張建國", address: "zhang@def-corp.com" },
+        subject: "產品技術規格諮詢",
+        date: new Date(Date.now() - 5*3600000),
+        text: "您好，\n\n我們正在評估貴公司的產品是否符合我們的技術需求。\n\n請問 X100 系列是否支持以下規格：\n- 工作溫度範圍 -20°C 至 60°C\n- IP67 防水防塵等級\n- CE 和 FCC 認證",
+        isRead: false,
+        priority: "medium",
+        aiAnalysis: {
+            sentiment: "中性",
+            intent: "技術評估 70%",
+            urgency: "中",
+            value: "待評估",
+            keyPoints: ["技術規格", "認證要求", "環境適應性"]
+        }
+    },
+    {
+        id: "5",
+        from: { name: "劉經理", address: "liu@jkl-trading.com" },
+        subject: "Re: 上月訂單進度",
+        date: new Date(Date.now() - 17*3600000),
+        text: "您好，\n\n上個月的訂單（訂單號 #2024-1015）目前進度如何？客戶那邊一直在催。\n\n請回覆預計交貨時間，謝謝！",
+        isRead: true,
+        priority: "medium",
+        aiAnalysis: {
+            sentiment: "關切",
+            intent: "訂單追蹤",
+            urgency: "中高",
+            value: "現有客戶",
+            keyPoints: ["訂單 #2024-1015", "客戶催促", "交貨時間"]
+        }
+    }
+];
+
+// 載入演示數據
+window.addEventListener('DOMContentLoaded', () => {
+    console.log('🎭 演示模式 - 使用本地數據');
+    loadDemoData();
+    showNotification('演示模式已啟動 - 顯示模擬郵件數據', 'info');
+});
+
+function loadDemoData() {
+    // 顯示郵件
+    displayEmails(DEMO_EMAILS);
+    
+    // 生成聯絡人卡片
+    const contactsContainer = document.querySelector('.contacts-scroll');
+    if (contactsContainer) {
+        contactsContainer.innerHTML = '';
+        DEMO_EMAILS.forEach(email => {
+            const card = createContactCard(email);
+            contactsContainer.appendChild(card);
+        });
+    }
+    
+    // 更新統計
+    updateStats();
+}
+
+function createContactCard(email) {
+    const card = document.createElement('div');
+    card.className = `contact-card ${email.isRead ? 'completed' : ''}`;
+    card.dataset.emailId = email.id;
+    
+    const initial = email.from.name.charAt(0);
+    const colors = ['#0078d4', '#00897b', '#e91e63', '#ff6f00', '#7b1fa2'];
+    const color = colors[email.id.charCodeAt(0) % colors.length];
+    
+    card.innerHTML = `
+        <div class="contact-avatar" style="background:${color}">${initial}</div>
+        <div class="contact-info">
+            <h4>${email.from.name}</h4>
+            <p>${email.from.address}</p>
+            <div class="contact-meta">
+                <span class="priority-badge priority-${email.priority}">${email.priority === 'urgent' ? '緊急' : email.priority === 'high' ? '高' : '中'}</span>
+                <span class="value-estimate">${email.aiAnalysis.value}</span>
+            </div>
+        </div>
+        ${!email.isRead ? '<div class="unread-indicator"></div>' : '<div class="checkmark">✓</div>'}
+    `;
+    
+    card.addEventListener('click', () => showEmailDetail(email));
+    return card;
+}
+
+function displayEmails(emails) {
+    const container = document.querySelector('.email-list');
+    if (!container) return;
+    
+    container.innerHTML = emails.map(email => `
+        <div class="email-item ${!email.isRead ? 'unread' : ''}" data-email-id="${email.id}" onclick="showEmailDetail(${JSON.stringify(email).replace(/"/g, '&quot;')})">
+            <div class="email-avatar">${email.from.name.charAt(0)}</div>
+            <div class="email-info">
+                <div class="email-header">
+                    <span class="email-sender">${email.from.name}</span>
+                    <span class="email-time">${formatTime(email.date)}</span>
+                </div>
+                <div class="email-subject">${email.subject}</div>
+                <div class="email-preview">${email.text.substring(0, 80)}...</div>
+                <div class="email-tags">
+                    <span class="tag priority-${email.priority}">${email.priority === 'urgent' ? '緊急' : email.priority === 'high' ? '高優先' : '中等'}</span>
+                    <span class="tag">${email.aiAnalysis.intent}</span>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+function showEmailDetail(email) {
+    const contentPanel = document.querySelector('.email-content-panel');
+    if (!contentPanel) return;
+    
+    contentPanel.innerHTML = `
+        <div class="email-detail">
+            <div class="email-detail-header">
+                <h2>${email.subject}</h2>
+                <div class="email-actions">
+                    <button class="btn-icon" title="回覆"><span>↩️</span></button>
+                    <button class="btn-icon" title="轉發"><span>➡️</span></button>
+                    <button class="btn-icon" title="刪除"><span>🗑️</span></button>
+                </div>
+            </div>
+            <div class="email-meta-info">
+                <div class="sender-info">
+                    <div class="avatar-large">${email.from.name.charAt(0)}</div>
+                    <div>
+                        <strong>${email.from.name}</strong>
+                        <p>${email.from.address}</p>
+                    </div>
+                </div>
+                <span class="email-date">${new Date(email.date).toLocaleString('zh-TW')}</span>
+            </div>
+            <div class="email-body">
+                ${email.text.replace(/\n/g, '<br>')}
+            </div>
+            <div class="ai-insights-box">
+                <div class="insights-header">
+                    <h4>🤖 AI 智能分析</h4>
+                </div>
+                <div class="insights-content">
+                    <div class="insight-item">
+                        <span class="insight-icon">🎯</span>
+                        <div>
+                            <strong>客戶意向</strong>
+                            <p>${email.aiAnalysis.intent}</p>
+                        </div>
+                    </div>
+                    <div class="insight-item">
+                        <span class="insight-icon">💰</span>
+                        <div>
+                            <strong>商業價值</strong>
+                            <p>${email.aiAnalysis.value}</p>
+                        </div>
+                    </div>
+                    <div class="insight-item">
+                        <span class="insight-icon">⚡</span>
+                        <div>
+                            <strong>緊急程度</strong>
+                            <p>${email.aiAnalysis.urgency}</p>
+                        </div>
+                    </div>
+                    <div class="insight-item">
+                        <span class="insight-icon">📌</span>
+                        <div>
+                            <strong>關鍵要點</strong>
+                            <p>${email.aiAnalysis.keyPoints.join(' • ')}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // 更新 AI 助理面板
+    updateAIPanel(email);
+}
+
+function updateAIPanel(email) {
+    // 更新 Merchandising PM 數據
+    const dealsContainer = document.querySelector('.deals-pipeline');
+    if (dealsContainer && email.priority === 'high') {
+        const dealCard = document.createElement('div');
+        dealCard.className = 'deal-card';
+        dealCard.innerHTML = `
+            <h4>${email.from.name}</h4>
+            <p class="deal-value">${email.aiAnalysis.value}</p>
+            <div class="deal-progress">
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: 35%"></div>
+                </div>
+                <span>初步接觸</span>
+            </div>
+            <div class="deal-meta">
+                <span>🎯 ${email.aiAnalysis.intent}</span>
+            </div>
+        `;
+        dealsContainer.prepend(dealCard);
+    }
+}
+
+function updateStats() {
+    // 更新統計數據
+    const stats = {
+        totalDeals: DEMO_EMAILS.filter(e => e.priority === 'high').length,
+        totalValue: '$160K+',
+        activeConversations: DEMO_EMAILS.filter(e => !e.isRead).length,
+        responseRate: '94%'
+    };
+    
+    console.log('📊 統計數據:', stats);
+}
+
+function formatTime(date) {
+    const d = new Date(date);
+    const now = new Date();
+    const diff = now - d;
+    const hours = Math.floor(diff / 3600000);
+    
+    if (hours < 1) return '剛剛';
+    if (hours < 24) return `${hours} 小時前`;
+    const days = Math.floor(hours / 24);
+    if (days === 1) return '昨天';
+    if (days < 7) return `${days} 天前`;
+    return d.toLocaleDateString('zh-TW');
+}
+
+function showNotification(message, type = 'info') {
+    console.log(`[${type.toUpperCase()}] ${message}`);
+    
+    // 創建通知元素
+    const notification = document.createElement('div');
+    notification.className = `notification ${type}`;
+    notification.textContent = message;
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 15px 25px;
+        background: ${type === 'success' ? '#4caf50' : type === 'error' ? '#f44336' : '#2196f3'};
+        color: white;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        z-index: 10000;
+        animation: slideIn 0.3s ease-out;
+    `;
+    
+    document.body.appendChild(notification);
+    setTimeout(() => {
+        notification.style.animation = 'slideOut 0.3s ease-out';
+        setTimeout(() => notification.remove(), 300);
+    }, 3000);
+}
+</script>
+</body>
+</html>

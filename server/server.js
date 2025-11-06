@@ -82,13 +82,16 @@ app.use((req, res) => {
 // ===================================
 // 啟動服務器
 // ===================================
-app.listen(PORT, () => {
+const HOST = process.env.HOST || '0.0.0.0';
+app.listen(PORT, HOST, () => {
     console.log('========================================');
     console.log('🚀 Outlook AI Backend Server Started');
     console.log('========================================');
     console.log(`📍 Server: http://localhost:${PORT}`);
+    console.log(`📍 Server: http://21.0.0.30:${PORT}`);
     console.log(`🌐 Environment: ${process.env.NODE_ENV || 'development'}`);
     console.log(`📧 Email Service: ${process.env.EMAIL_SERVICE_TYPE || 'Not configured'}`);
+    console.log(`🎯 Listening on: ${HOST}:${PORT}`);
     console.log('========================================');
 });
 
