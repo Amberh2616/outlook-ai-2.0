@@ -15,7 +15,16 @@ class EmailService {
 
     // 初始化服務
     initializeService() {
-        const serviceType = process.env.EMAIL_SERVICE_TYPE || 'imap';
+        const serviceType = process.env.EMAIL_SERVICE_TYPE || 'demo';
+
+        // 演示模式 - 不需要真實郵件配置
+        if (serviceType === 'demo') {
+            console.log('📧 演示模式啟用 - 使用模擬郵件數據');
+            this.demoMode = true;
+            return;
+        }
+
+        this.demoMode = false;
 
         if (serviceType === 'gmail') {
             this.setupGmail();
@@ -112,6 +121,11 @@ class EmailService {
             unreadOnly = false,
             since = null
         } = options;
+
+        // 演示模式：返回模擬數據
+        if (this.demoMode) {
+            return this.getDemoEmails(limit);
+        }
 
         return new Promise((resolve, reject) => {
             const imap = new Imap(this.imapConfig);
@@ -488,6 +502,130 @@ class EmailService {
 
             imap.connect();
         });
+    }
+
+    // 演示模式：生成模擬郵件
+    getDemoEmails(limit = 10) {
+        const demoEmails = [
+            {
+                id: '1',
+                messageId: '<demo1@example.com>',
+                from: { name: '王小明', address: 'wang@abc-tech.com' },
+                to: [{ name: 'Amber', address: 'amber@company.com' }],
+                subject: '關於產品報價的討論',
+                date: new Date(Date.now() - 2 * 3600000),
+                text: '您好 Amber，\n\n我們是 ABC 科技公司的採購部門。最近在市場調查中注意到貴公司的產品線，特別是新推出的智能設備系列，我們非常感興趣。\n\n能否請您提供以下資訊：\n- 產品型號 X100 的詳細規格和報價\n- 大量採購的折扣方案\n- 交貨期和售後服務條款\n\n我們預計採購數量在 500-1000 件之間，預算範圍在 $50,000-$100,000。希望能在本月底前做出採購決定。\n\n期待您的回覆。\n\n謝謝！\n王小明\nABC 科技採購部',
+                bodyPreview: '您好，我們對貴公司的產品很感興趣，想了解更詳細的報價資訊...',
+                isRead: false
+            },
+            {
+                id: '2',
+                messageId: '<demo2@example.com>',
+                from: { name: '李美玲', address: 'li@xyz-trade.com' },
+                to: [{ name: 'Amber', address: 'amber@company.com' }],
+                subject: '物流配送時間確認',
+                date: new Date(Date.now() - 24 * 3600000),
+                text: '您好，\n\n請確認本批貨物的配送時間，我們這邊需要提前安排倉儲空間。\n\n訂單編號：#XYZ-2024-001\n數量：300 件\n\n這批貨物今日截止確認，麻煩儘快回覆。\n\n謝謝！\n李美玲\nXYZ 貿易物流部',
+                bodyPreview: '請確認本批貨物的配送時間，我們這邊需要提前安排...',
+                isRead: false
+            },
+            {
+                id: '3',
+                messageId: '<demo3@example.com>',
+                from: { name: '陳雅婷', address: 'chen@ghi-group.com' },
+                to: [{ name: 'Amber', address: 'amber@company.com' }],
+                subject: '新產品合作機會',
+                date: new Date(Date.now() - 3 * 3600000),
+                text: '您好 Amber，\n\n我們是 GHI 集團的採購經理。看到貴公司最近推出的新產品線，我們認為有很好的合作機會。\n\nGHI 集團是業內領先的經銷商，每年採購額超過 $10M。我們想了解：\n- 是否有經銷商合作方案\n- 長期合作的價格優惠\n- 獨家代理的可能性\n\n希望能安排一次會議詳細討論。\n\n期待您的回覆！\n\n陳雅婷\nGHI 集團採購總監',
+                bodyPreview: '我們是 GHI 集團的採購經理，看到貴公司的新產品線...',
+                isRead: false
+            },
+            {
+                id: '4',
+                messageId: '<demo4@example.com>',
+                from: { name: '張建國', address: 'zhang@def-corp.com' },
+                to: [{ name: 'Amber', address: 'amber@company.com' }],
+                subject: '產品技術規格諮詢',
+                date: new Date(Date.now() - 5 * 3600000),
+                text: '您好，\n\n我們正在評估貴公司的產品是否符合我們的技術需求。\n\n請問 X100 系列是否支持以下規格：\n- 工作溫度範圍 -20°C 至 60°C\n- IP67 防水防塵等級\n- CE 和 FCC 認證\n\n這些是我們採購的基本要求。\n\n謝謝！\n張建國\nDEF 企業技術部',
+                bodyPreview: '我們正在評估貴公司的產品是否符合我們的技術需求...',
+                isRead: false
+            },
+            {
+                id: '5',
+                messageId: '<demo5@example.com>',
+                from: { name: '劉經理', address: 'liu@jkl-trading.com' },
+                to: [{ name: 'Amber', address: 'amber@company.com' }],
+                subject: 'Re: 上月訂單進度',
+                date: new Date(Date.now() - 12 * 3600000),
+                text: '您好，\n\n上個月的訂單（訂單號 #2024-1015）目前進度如何？客戶那邊一直在催。\n\n請回覆預計交貨時間，謝謝！\n\n劉經理',
+                bodyPreview: '上個月的訂單目前進度如何？客戶那邊一直在催...',
+                isRead: true
+            }
+        ];
+
+        return demoEmails.slice(0, limit);
+    }
+
+    // 演示模式：發送郵件（模擬）
+    async sendEmailDemo(emailData) {
+        console.log('📧 演示模式：模擬發送郵件');
+        console.log('收件人:', emailData.to);
+        console.log('主旨:', emailData.subject);
+
+        return {
+            success: true,
+            messageId: '<demo-sent-' + Date.now() + '@example.com>',
+            response: 'Demo email sent (simulated)'
+        };
+    }
+
+    // 覆蓋 sendEmail 方法以支持演示模式
+    async sendEmail(emailData) {
+        if (this.demoMode) {
+            return this.sendEmailDemo(emailData);
+        }
+
+        return super.sendEmail ? super.sendEmail(emailData) : this.sendEmailReal(emailData);
+    }
+
+    async sendEmailReal(emailData) {
+        const {
+            to,
+            cc,
+            bcc,
+            subject,
+            text,
+            html,
+            attachments = [],
+            replyTo = null,
+            inReplyTo = null
+        } = emailData;
+
+        const mailOptions = {
+            from: this.imapConfig.user,
+            to,
+            cc,
+            bcc,
+            subject,
+            text,
+            html,
+            attachments,
+            replyTo,
+            inReplyTo
+        };
+
+        try {
+            const info = await this.smtpTransporter.sendMail(mailOptions);
+            return {
+                success: true,
+                messageId: info.messageId,
+                response: info.response
+            };
+        } catch (error) {
+            console.error('Send email error:', error);
+            throw error;
+        }
     }
 }
 
