@@ -1,214 +1,855 @@
 <!DOCTYPE html>
-<html lang="en">
-
+<html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>韓國演員鄭雨盛</title>
-    <link rel="stylesheet" href="css/bootstrap.min.css">
-    <link rel="stylesheet" href="css/index.css">
+    <title>Outlook AI - 智能郵件管理系統</title>
+    <link rel="stylesheet" href="css/outlook-ai.css">
 </head>
-
 <body>
-    <div id="root">
-        <nav class="navbar navbar-expand-md bg-body-tertiary">
-            <div class="container-fluid">
-                <a class="navbar-brand" href="#">韓國演員</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
-                    data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent"
-                    aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="collapse navbar-collapse" id="navbarSupportedContent">
-                    <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
-                        <li class="nav-item">
-                            <a class="nav-link active" aria-current="page" href="#">Home</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="#">演員資訊</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="#">公佈欄</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="#">聯絡我們</a>
-                        </li>
-                    </ul>
+    <!-- 頂部導航欄 -->
+    <header class="top-header">
+        <div class="logo">
+            <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+                <rect width="32" height="32" rx="6" fill="#0078D4"/>
+                <path d="M16 8L8 12v8c0 5 8 10 8 10s8-5 8-10v-8l-8-4z" fill="white"/>
+            </svg>
+            <h1>Outlook AI</h1>
+        </div>
+        <nav class="main-nav">
+            <button class="nav-btn active" data-view="inbox">
+                <svg width="20" height="20" viewBox="0 0 20 20"><path d="M3 4h14v12H3V4z" stroke="currentColor" fill="none"/></svg>
+                收件箱
+            </button>
+            <button class="nav-btn" data-view="sent">
+                <svg width="20" height="20" viewBox="0 0 20 20"><path d="M3 10l14-6v12L3 10z" fill="currentColor"/></svg>
+                已發送
+            </button>
+            <button class="nav-btn" data-view="ai-insights">
+                <svg width="20" height="20" viewBox="0 0 20 20"><circle cx="10" cy="10" r="8" stroke="currentColor" fill="none"/><path d="M10 6v4l3 3" stroke="currentColor" fill="none"/></svg>
+                AI 洞察
+            </button>
+        </nav>
+        <div class="user-profile">
+            <img src="https://i.pravatar.cc/40?img=12" alt="User" class="user-avatar">
+            <span class="user-name">Amber</span>
+        </div>
+    </header>
+
+    <!-- 主要內容區 -->
+    <main class="main-container">
+        <!-- 第一層：今日收件人大頭像面板 -->
+        <section class="layer-1 contacts-layer">
+            <div class="layer-header">
+                <h2>今日聯絡人</h2>
+                <div class="filter-tabs">
+                    <button class="tab active" data-filter="pending">待處理 <span class="badge">8</span></button>
+                    <button class="tab" data-filter="completed">已完成 <span class="badge">12</span></button>
                 </div>
             </div>
-        </nav>
-        <div id="layout">
-            <header>
-                <h2>韓國影帝鄭雨盛<br>JUNG WOO SUNG</h2>
-                <picture>
-                    <source media="(min-width: 1400px)" srcset="images/33.webp" width="900">
-                    <source media="(min-width: 1200px)" srcset="images/33.webp" width="900">
-                    <source media="(min-width: 992px)" srcset="images/2.webp" width="600">
-                    <source media="(min-width: 768px)" srcset="images/2.webp" width="400">
-                    <source media="(min-width: 576px)" srcset="images/2.webp"width ="400">                    
-                    <img src="images/100.jpg" alt="JUNG WOO SUNG">
-                </picture>
-            </header>
-            <main>
-                <div id="cards">
-                    <section>
-                        <div class="card">
-                            <h3 class="cardTitle">
-                                <img src="images/44.webp" width="100%">
-                            </h3>
-                            <p class="cardText">
-                                2018年，韓國濟州島來了500多位葉門難民身分申請者，引發韓國社會的強烈反彈，鄭雨盛為了難民的權益挺身而出，儘管因此遭受批評也毫不退縮，持續以開放的心胸參與討論，更上新聞節目《NEWSROOM》探討羅興亞難民議題。
-                            </p>
-                            <div class="cardFooter">
-                                <a href="#" class="view">顯示</a><a href="#" class="edit">編輯</a><span>9分鐘</span>
-                            </div>
-                        </div>
-                    </section>
-                    <section>
-                        <div class="card">
-                            <h3 class="cardTitle">
-                                <img src="images/6.webp" width="100%">
-                            </h3>
-                            <p class="cardText">
-                                鄭雨盛不僅記錄了5年來與難民互動的故事，也寫下自己對難民問題的諸多思考。藉由本書，他希望人們的關心應該更加擴大，去關注鄰居、社會，以及整個世界，去感受人與人之間強烈的連結，明白相互理解、平等對待有多麼的重要，這本書《走入戰火邊界，我所見的一切：鄭雨盛，與難民相遇》，就讓更多人認識世界難民的處境。  
-                            </p>
-                            <div class="cardFooter">
-                                <a href="#" class="view">顯示</a><a href="#" class="edit">編輯</a><span>9分鐘</span>
-                            </div>
-                        </div>
-                    </section>
-                    <section>
-                        <div class="card">
-                            <h3 class="cardTitle">
-                                <img src="images/8.webp" width="100%">
-                            </h3>
-                            <p class="cardText">
-                                這裡是我去年出訪的孟加拉庫圖帕隆難民營。在這個世界規模最大的難民營裡，住著十幾萬等待重返家園的羅興亞族難民。今天是世界難民日，目前全世界有六千八百五十萬人失去家園，一千六百二十萬人在二〇一七年被迫離開故鄉。今天，請大家心繫難民，理解他們，成為他們的希望。
 
-
-                            </p>
-                            <div class="cardFooter">
-                                <a href="#" class="view">顯示</a><a href="#" class="edit">編輯</a><span>9分鐘</span>
-                            </div>
+            <div class="contacts-grid" id="contactsGrid">
+                <!-- 待處理的聯絡人 -->
+                <div class="contact-card pending" data-contact-id="1" draggable="true">
+                    <div class="contact-avatar-wrapper">
+                        <img src="https://i.pravatar.cc/80?img=1" alt="Contact" class="contact-avatar">
+                        <span class="status-indicator urgent"></span>
+                        <span class="unread-count">3</span>
+                    </div>
+                    <div class="contact-info">
+                        <h3 class="contact-name">王小明</h3>
+                        <p class="contact-company">ABC 科技</p>
+                        <div class="contact-tags">
+                            <span class="tag priority-high">高優先級</span>
+                            <span class="tag ai-suggested">AI 建議跟進</span>
                         </div>
-                    </section>
-                    <section>
-                        <div class="card">
-                            <h3 class="cardTitle">
-                                <img src="images/3.webp" width="100%">
-                            </h3>
-                            <p class="cardText">
-                                某幾次參與活動時，我也曾捫心自問：「如果這些難民來到韓國，我們的社會會接納他們嗎？我們能夠產生多大的共鳴？我們的社會，究竟有多理解難民？」正因為我知道這是一個很難立刻產生同理的問題，所以看到這些反應並不覺得驚慌失措，只能說，這樣的情況比我預期得更早發生了，才會出現如此激烈的反彈，我也認為自己有必要去理解持反對立場的人，以理解作為基礎，向他們好好解釋、進而說服他們 
-                            </p>
-                            <div class="cardFooter">
-                                <a href="#" class="view">顯示</a><a href="#" class="edit">編輯</a><span>9分鐘</span>
-                            </div>
-                        </div>
-                    </section>
-                    <section>
-                        <div class="card">
-                            <h3 class="cardTitle">
-                                <img src="images/11.webp" width="100%">
-                            </h3>
-                            <p class="cardText">
-                                其實我只是跟往年一樣，在世界難民日當天發表了一篇呼籲大眾關心難民問題的文章，但不同的是，這次多放了一段聯合國難民署的官方聲明。一位朋友猜測，會不會是那篇官方聲明寫道：「聯合國難民署堅決不允許強制遣返任何一個葉門人。」這點激怒了大家。這也是有可能的，以保護難民為使命的國際機構在發表聲明時，措辭難免會有些強硬，大眾並不熟悉這種表達方式因而感到吃驚。
-                            </p>
-                            <div class="cardFooter">
-                                <a href="#" class="view">顯示</a><a href="#" class="edit">編輯</a><span>9分鐘</span>
-                            </div>
-                        </div>
-                    </section>
-                    <section>
-                        <div class="card">
-                            <h3 class="cardTitle">
-                                <img src="images/55.webp" width="100%">
-                            </h3>
-                            <p class="cardText">
-                                我認為過去我們之所以能寬容地看待難民問題，是因為我們把它當成「其他國家的問題」，當這個問題來到眼前，我們體認到這是自己的問題後，才終於開始袒露真實的想法。因此，針對眼下發生在我們社會的難民問題，「溝通」顯得尤為重要。我們必須拋開錯誤的訊息，收起毫無建設性的情緒，此時此刻，我們需要面對面坐下來，用對話來解決問題。
-                            </p>
-                            <div class="cardFooter">
-                                <a href="#" class="view">顯示</a><a href="#" class="edit">編輯</a><span>9分鐘</span>
-                            </div>
-                        </div>
-                    </section>
-                    <section>
-                        <div class="card">
-                            <h3 class="cardTitle">
-                                <img src="images/77.webp" width="100%">
-                            </h3>
-                            <p class="cardText">
-                                在這樣的時間點上，大韓民國所面臨的難民問題並不單純只是難民的問題，其中也包含本國的社會問題。我認為問題的核心不是接受或不接受難民，而是要傾聽那些向國家呼喊：「不要只顧難民，也請照顧一下我們，我們也生活在這裡！」的聲音。
-                            </p>
-                            <div class="cardFooter">
-                                <a href="#" class="view">顯示</a><a href="#" class="edit">編輯</a><span>9分鐘</span>
-                            </div>
-                        </div>
-                    </section>
-                    <section >
-                        <div class="card">
-                            <h3 class="cardTitle">
-                                <img src="images/00.webp" width="100%">
-                            </h3>
-                            <p class="cardText">
-                                葉門人的難民申請問題促使韓國社會存在的矛盾浮出了水面，我認為這是一個好機會。如果能妥善處理難民問題，我們便會成為更加成熟的大韓民國。經由這次事件，讓我們看到被社會疏遠的階層，希望以此為契機，去幫助這些人。此外，也希望大韓民國藉由這次機會，針對難民和其他各種爭端，在國際社會上扮演更好的角色。
-                            </p>
-                            <div class="cardFooter">
-                                <a href="#" class="view">顯示</a><a href="#" class="edit">編輯</a><span>9分鐘</span>
-                            </div>
-                        </div>
-                    </section>
-                    <section>
-                        <div class="card">
-                            <h3 class="cardTitle">
-                                <img src="images/2.webp" width="100%">
-                            </h3>
-                            <p class="cardText">
-                                我還貼出聯合國難民署針對濟州島的葉門難民申請者的聲明，並向當時為來到濟州島的葉門難民提供幫助的政府和濟州島民表達感謝。最後提到聯合國難民署的明確立場：因葉門目前正處於嚴重的人道危機中，因此不可強制遣返這些難民申請者。
-                            </p>
-                            <div class="cardFooter">
-                                <a href="#" class="view">顯示</a><a href="#" class="edit">編輯</a><span>9分鐘</span>
-                            </div>
-                        </div>
-                    </section>
+                    </div>
+                    <div class="ai-score" data-score="95">
+                        <svg class="score-ring" width="50" height="50">
+                            <circle cx="25" cy="25" r="20" fill="none" stroke="#e0e0e0" stroke-width="4"/>
+                            <circle cx="25" cy="25" r="20" fill="none" stroke="#00C853" stroke-width="4" stroke-dasharray="125.6" stroke-dashoffset="6.28" transform="rotate(-90 25 25)"/>
+                        </svg>
+                        <span class="score-text">95</span>
+                    </div>
                 </div>
-            </main>
-            <footer>
-                
-                <ul>
-                    <li><a href="#">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-twitter" viewBox="0 0 16 16">
-                            <path d="M5.026 15c6.038 0 9.341-5.003 9.341-9.334 0-.14 0-.282-.006-.422A6.685 6.685 0 0 0 16 3.542a6.658 6.658 0 0 1-1.889.518 3.301 3.301 0 0 0 1.447-1.817 6.533 6.533 0 0 1-2.087.793A3.286 3.286 0 0 0 7.875 6.03a9.325 9.325 0 0 1-6.767-3.429 3.289 3.289 0 0 0 1.018 4.382A3.323 3.323 0 0 1 .64 6.575v.045a3.288 3.288 0 0 0 2.632 3.218 3.203 3.203 0 0 1-.865.115 3.23 3.23 0 0 1-.614-.057 3.283 3.283 0 0 0 3.067 2.277A6.588 6.588 0 0 1 .78 13.58a6.32 6.32 0 0 1-.78-.045A9.344 9.344 0 0 0 5.026 15z"/>
-                          </svg>
-                        <span>Twitter</span></a>
-                    </li>
 
-                    <li>
-                        <a href="#">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-facebook" viewBox="0 0 16 16">
-                                <path d="M16 8.049c0-4.446-3.582-8.05-8-8.05C3.58 0-.002 3.603-.002 8.05c0 4.017 2.926 7.347 6.75 7.951v-5.625h-2.03V8.05H6.75V6.275c0-2.017 1.195-3.131 3.022-3.131.876 0 1.791.157 1.791.157v1.98h-1.009c-.993 0-1.303.621-1.303 1.258v1.51h2.218l-.354 2.326H9.25V16c3.824-.604 6.75-3.934 6.75-7.951z"/>
-                              </svg>
-                           
-                        <span>facebook</span>
-                    </a>
-                    </li>
+                <div class="contact-card pending" data-contact-id="2" draggable="true">
+                    <div class="contact-avatar-wrapper">
+                        <img src="https://i.pravatar.cc/80?img=5" alt="Contact" class="contact-avatar">
+                        <span class="status-indicator important"></span>
+                        <span class="unread-count">2</span>
+                    </div>
+                    <div class="contact-info">
+                        <h3 class="contact-name">李美玲</h3>
+                        <p class="contact-company">XYZ 貿易</p>
+                        <div class="contact-tags">
+                            <span class="tag priority-medium">中優先級</span>
+                            <span class="tag deadline">今日截止</span>
+                        </div>
+                    </div>
+                    <div class="ai-score" data-score="78">
+                        <svg class="score-ring" width="50" height="50">
+                            <circle cx="25" cy="25" r="20" fill="none" stroke="#e0e0e0" stroke-width="4"/>
+                            <circle cx="25" cy="25" r="20" fill="none" stroke="#FFC107" stroke-width="4" stroke-dasharray="125.6" stroke-dashoffset="27.6" transform="rotate(-90 25 25)"/>
+                        </svg>
+                        <span class="score-text">78</span>
+                    </div>
+                </div>
 
-                    <li>
-                        <a href="#">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-instagram" viewBox="0 0 16 16">
-                                    <path d="M8 0C5.829 0 5.556.01 4.703.048 3.85.088 3.269.222 2.76.42a3.917 3.917 0 0 0-1.417.923A3.927 3.927 0 0 0 .42 2.76C.222 3.268.087 3.85.048 4.7.01 5.555 0 5.827 0 8.001c0 2.172.01 2.444.048 3.297.04.852.174 1.433.372 1.942.205.526.478.972.923 1.417.444.445.89.719 1.416.923.51.198 1.09.333 1.942.372C5.555 15.99 5.827 16 8 16s2.444-.01 3.298-.048c.851-.04 1.434-.174 1.943-.372a3.916 3.916 0 0 0 1.416-.923c.445-.445.718-.891.923-1.417.197-.509.332-1.09.372-1.942C15.99 10.445 16 10.173 16 8s-.01-2.445-.048-3.299c-.04-.851-.175-1.433-.372-1.941a3.926 3.926 0 0 0-.923-1.417A3.911 3.911 0 0 0 13.24.42c-.51-.198-1.092-.333-1.943-.372C10.443.01 10.172 0 7.998 0h.003zm-.717 1.442h.718c2.136 0 2.389.007 3.232.046.78.035 1.204.166 1.486.275.373.145.64.319.92.599.28.28.453.546.598.92.11.281.24.705.275 1.485.039.843.047 1.096.047 3.231s-.008 2.389-.047 3.232c-.035.78-.166 1.203-.275 1.485a2.47 2.47 0 0 1-.599.919c-.28.28-.546.453-.92.598-.28.11-.704.24-1.485.276-.843.038-1.096.047-3.232.047s-2.39-.009-3.233-.047c-.78-.036-1.203-.166-1.485-.276a2.478 2.478 0 0 1-.92-.598 2.48 2.48 0 0 1-.6-.92c-.109-.281-.24-.705-.275-1.485-.038-.843-.046-1.096-.046-3.233 0-2.136.008-2.388.046-3.231.036-.78.166-1.204.276-1.486.145-.373.319-.64.599-.92.28-.28.546-.453.92-.598.282-.11.705-.24 1.485-.276.738-.034 1.024-.044 2.515-.045v.002zm4.988 1.328a.96.96 0 1 0 0 1.92.96.96 0 0 0 0-1.92zm-4.27 1.122a4.109 4.109 0 1 0 0 8.217 4.109 4.109 0 0 0 0-8.217zm0 1.441a2.667 2.667 0 1 1 0 5.334 2.667 2.667 0 0 1 0-5.334z"/>
-                            </svg>   
-                            <span>Instagram</span>
-                        </a>
-                    </li>
-                </ul>
-                <address>Created by Amber Hu © 2023</address>        
-            </footer>
+                <div class="contact-card pending" data-contact-id="3" draggable="true">
+                    <div class="contact-avatar-wrapper">
+                        <img src="https://i.pravatar.cc/80?img=8" alt="Contact" class="contact-avatar">
+                        <span class="status-indicator normal"></span>
+                        <span class="unread-count">1</span>
+                    </div>
+                    <div class="contact-info">
+                        <h3 class="contact-name">張建國</h3>
+                        <p class="contact-company">DEF 企業</p>
+                        <div class="contact-tags">
+                            <span class="tag priority-low">低優先級</span>
+                            <span class="tag follow-up">待跟進</span>
+                        </div>
+                    </div>
+                    <div class="ai-score" data-score="62">
+                        <svg class="score-ring" width="50" height="50">
+                            <circle cx="25" cy="25" r="20" fill="none" stroke="#e0e0e0" stroke-width="4"/>
+                            <circle cx="25" cy="25" r="20" fill="none" stroke="#2196F3" stroke-width="4" stroke-dasharray="125.6" stroke-dashoffset="47.7" transform="rotate(-90 25 25)"/>
+                        </svg>
+                        <span class="score-text">62</span>
+                    </div>
+                </div>
+
+                <div class="contact-card pending" data-contact-id="4" draggable="true">
+                    <div class="contact-avatar-wrapper">
+                        <img src="https://i.pravatar.cc/80?img=3" alt="Contact" class="contact-avatar">
+                        <span class="status-indicator urgent"></span>
+                        <span class="unread-count">5</span>
+                    </div>
+                    <div class="contact-info">
+                        <h3 class="contact-name">陳雅婷</h3>
+                        <p class="contact-company">GHI 集團</p>
+                        <div class="contact-tags">
+                            <span class="tag priority-high">高優先級</span>
+                            <span class="tag new-customer">新客戶</span>
+                        </div>
+                    </div>
+                    <div class="ai-score" data-score="88">
+                        <svg class="score-ring" width="50" height="50">
+                            <circle cx="25" cy="25" r="20" fill="none" stroke="#e0e0e0" stroke-width="4"/>
+                            <circle cx="25" cy="25" r="20" fill="none" stroke="#00C853" stroke-width="4" stroke-dasharray="125.6" stroke-dashoffset="15.1" transform="rotate(-90 25 25)"/>
+                        </svg>
+                        <span class="score-text">88</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 已完成區域（拖放目標） -->
+            <div class="completed-zone" id="completedZone">
+                <div class="zone-header">
+                    <svg width="24" height="24" viewBox="0 0 24 24">
+                        <path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z" fill="#00C853"/>
+                    </svg>
+                    <span>拖放到此處標記為已完成</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- 第二層：郵件列表 + 聊天整合介面 -->
+        <section class="layer-2 email-chat-layer">
+            <!-- 郵件列表 -->
+            <div class="email-list-panel">
+                <div class="panel-header">
+                    <h2>郵件列表</h2>
+                    <div class="search-box">
+                        <svg width="16" height="16" viewBox="0 0 16 16">
+                            <circle cx="6" cy="6" r="5" stroke="currentColor" fill="none"/>
+                            <path d="M10 10l4 4" stroke="currentColor"/>
+                        </svg>
+                        <input type="text" placeholder="搜尋郵件..." id="emailSearch">
+                    </div>
+                </div>
+
+                <div class="email-list" id="emailList">
+                    <div class="email-item unread selected" data-email-id="1" data-contact-id="1">
+                        <div class="email-sender">
+                            <img src="https://i.pravatar.cc/40?img=1" alt="Sender" class="sender-avatar">
+                            <div class="sender-info">
+                                <h4>王小明</h4>
+                                <span class="email-time">上午 9:30</span>
+                            </div>
+                        </div>
+                        <div class="email-preview">
+                            <h5 class="email-subject">關於產品報價的討論</h5>
+                            <p class="email-snippet">您好，我們對貴公司的產品很感興趣，想了解更詳細的報價資訊...</p>
+                        </div>
+                        <div class="email-meta">
+                            <span class="ai-label">AI 分析: 高意向客戶</span>
+                            <span class="category-tag">報價諮詢</span>
+                        </div>
+                    </div>
+
+                    <div class="email-item unread" data-email-id="2" data-contact-id="1">
+                        <div class="email-sender">
+                            <img src="https://i.pravatar.cc/40?img=1" alt="Sender" class="sender-avatar">
+                            <div class="sender-info">
+                                <h4>王小明</h4>
+                                <span class="email-time">上午 10:15</span>
+                            </div>
+                        </div>
+                        <div class="email-preview">
+                            <h5 class="email-subject">Re: 關於產品報價的討論</h5>
+                            <p class="email-snippet">補充一下，我們預計採購數量在 500-1000 件之間...</p>
+                        </div>
+                        <div class="email-meta">
+                            <span class="ai-label urgent">需要立即回覆</span>
+                            <span class="category-tag">訂單確認</span>
+                        </div>
+                    </div>
+
+                    <div class="email-item" data-email-id="3" data-contact-id="2">
+                        <div class="email-sender">
+                            <img src="https://i.pravatar.cc/40?img=5" alt="Sender" class="sender-avatar">
+                            <div class="sender-info">
+                                <h4>李美玲</h4>
+                                <span class="email-time">昨天</span>
+                            </div>
+                        </div>
+                        <div class="email-preview">
+                            <h5 class="email-subject">物流配送時間確認</h5>
+                            <p class="email-snippet">請確認本批貨物的配送時間，我們這邊需要提前安排...</p>
+                        </div>
+                        <div class="email-meta">
+                            <span class="ai-label">建議今日跟進</span>
+                            <span class="category-tag">物流</span>
+                        </div>
+                    </div>
+
+                    <div class="email-item unread" data-email-id="4" data-contact-id="4">
+                        <div class="email-sender">
+                            <img src="https://i.pravatar.cc/40?img=3" alt="Sender" class="sender-avatar">
+                            <div class="sender-info">
+                                <h4>陳雅婷</h4>
+                                <span class="email-time">上午 11:20</span>
+                            </div>
+                        </div>
+                        <div class="email-preview">
+                            <h5 class="email-subject">新產品合作機會</h5>
+                            <p class="email-snippet">我們是 GHI 集團的採購經理，看到貴公司的新產品線...</p>
+                        </div>
+                        <div class="email-meta">
+                            <span class="ai-label potential">潛在大客戶</span>
+                            <span class="category-tag">商務合作</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 郵件內容 + 聊天整合 -->
+            <div class="email-content-panel">
+                <div class="content-header">
+                    <div class="email-header-info">
+                        <h3 class="email-title">關於產品報價的討論</h3>
+                        <div class="email-header-meta">
+                            <img src="https://i.pravatar.cc/40?img=1" alt="Sender" class="sender-avatar-large">
+                            <div>
+                                <h4>王小明 <span class="email-address">&lt;wangxm@abc-tech.com&gt;</span></h4>
+                                <p class="email-timestamp">今天上午 9:30</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="email-actions">
+                        <button class="action-btn" title="回覆">
+                            <svg width="20" height="20" viewBox="0 0 20 20"><path d="M10 15l-5-5h3V5h4v5h3l-5 5z" fill="currentColor"/></svg>
+                        </button>
+                        <button class="action-btn" title="轉發">
+                            <svg width="20" height="20" viewBox="0 0 20 20"><path d="M15 10l5 5-5 5v-3H5v-4h10v-3z" fill="currentColor"/></svg>
+                        </button>
+                        <button class="action-btn" title="封存">
+                            <svg width="20" height="20" viewBox="0 0 20 20"><rect x="3" y="5" width="14" height="10" stroke="currentColor" fill="none"/></svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 郵件內容 -->
+                <div class="email-body">
+                    <div class="email-content">
+                        <p>您好 Amber，</p>
+                        <p>我們是 ABC 科技公司的採購部門。最近在市場調查中注意到貴公司的產品線，特別是新推出的智能設備系列，我們非常感興趣。</p>
+                        <p>能否請您提供以下資訊：</p>
+                        <ul>
+                            <li>產品型號 X100 的詳細規格和報價</li>
+                            <li>大量採購的折扣方案</li>
+                            <li>交貨期和售後服務條款</li>
+                        </ul>
+                        <p>我們預計在本月底前做出採購決定，期待您的回覆。</p>
+                        <p>謝謝！<br>王小明<br>ABC 科技採購部</p>
+                    </div>
+
+                    <!-- AI 洞察面板 -->
+                    <div class="ai-insights-box">
+                        <div class="insights-header">
+                            <svg width="20" height="20" viewBox="0 0 20 20">
+                                <path d="M10 2l2 6h6l-5 4 2 6-5-4-5 4 2-6-5-4h6l2-6z" fill="#FFD700"/>
+                            </svg>
+                            <h4>AI 智能分析</h4>
+                        </div>
+                        <div class="insights-content">
+                            <div class="insight-item priority-high">
+                                <span class="insight-icon">🎯</span>
+                                <div>
+                                    <strong>客戶意向度: 95%</strong>
+                                    <p>這是一個高意向的潛在客戶，建議在 2 小時內回覆</p>
+                                </div>
+                            </div>
+                            <div class="insight-item">
+                                <span class="insight-icon">💼</span>
+                                <div>
+                                    <strong>商機價值: 預估 $50,000 - $100,000</strong>
+                                    <p>根據採購數量和產品型號分析</p>
+                                </div>
+                            </div>
+                            <div class="insight-item">
+                                <span class="insight-icon">⏰</span>
+                                <div>
+                                    <strong>建議跟進時間: 今天下午 2:00</strong>
+                                    <p>對方通常在下午較活躍</p>
+                                </div>
+                            </div>
+                            <div class="insight-item">
+                                <span class="insight-icon">📋</span>
+                                <div>
+                                    <strong>建議回覆重點</strong>
+                                    <ul class="suggestion-list">
+                                        <li>提供 X100 詳細規格文件</li>
+                                        <li>說明批量採購折扣（500+ 件享 15% 折扣）</li>
+                                        <li>承諾 3-5 個工作日交貨</li>
+                                        <li>強調一年保固和技術支援</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        <button class="generate-reply-btn">
+                            <svg width="16" height="16" viewBox="0 0 16 16">
+                                <path d="M8 2v12M2 8h12" stroke="currentColor" stroke-width="2"/>
+                            </svg>
+                            AI 生成回覆草稿
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 快速回覆 / 聊天區 -->
+                <div class="quick-reply-section">
+                    <div class="reply-tabs">
+                        <button class="reply-tab active" data-mode="reply">回覆</button>
+                        <button class="reply-tab" data-mode="chat">即時聊天</button>
+                        <button class="reply-tab" data-mode="template">快速範本</button>
+                    </div>
+                    <div class="reply-input-area">
+                        <div class="input-toolbar">
+                            <button class="toolbar-btn" title="AI 建議">
+                                <svg width="18" height="18" viewBox="0 0 18 18">
+                                    <circle cx="9" cy="9" r="7" stroke="currentColor" fill="none"/>
+                                    <path d="M9 5v4l3 3" stroke="currentColor" fill="none"/>
+                                </svg>
+                            </button>
+                            <button class="toolbar-btn" title="插入範本">
+                                <svg width="18" height="18" viewBox="0 0 18 18">
+                                    <rect x="3" y="3" width="12" height="12" stroke="currentColor" fill="none"/>
+                                </svg>
+                            </button>
+                            <button class="toolbar-btn" title="附件">
+                                <svg width="18" height="18" viewBox="0 0 18 18">
+                                    <path d="M10 2v10a3 3 0 0 1-6 0V4" stroke="currentColor" fill="none"/>
+                                </svg>
+                            </button>
+                        </div>
+                        <textarea class="reply-textarea" placeholder="輸入回覆內容... (AI 會自動分析您的語氣和內容)"></textarea>
+                        <div class="reply-actions">
+                            <div class="ai-suggestions">
+                                <span class="suggestion-chip">📊 附加報價單</span>
+                                <span class="suggestion-chip">📅 安排會議</span>
+                                <span class="suggestion-chip">🎁 提供優惠</span>
+                            </div>
+                            <button class="send-btn primary">
+                                <svg width="20" height="20" viewBox="0 0 20 20">
+                                    <path d="M2 10l16-8v16L2 10z" fill="white"/>
+                                </svg>
+                                發送
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 第三層：AI 助手面板 -->
+        <section class="layer-3 ai-assistant-layer">
+            <div class="assistant-header">
+                <h2>
+                    <svg width="24" height="24" viewBox="0 0 24 24">
+                        <path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5z" fill="#FF6B6B"/>
+                        <circle cx="12" cy="12" r="3" fill="white"/>
+                    </svg>
+                    AI 智能助手
+                </h2>
+                <button class="toggle-btn" id="toggleAiPanel">
+                    <svg width="20" height="20" viewBox="0 0 20 20">
+                        <path d="M5 8l5 5 5-5" stroke="currentColor" fill="none" stroke-width="2"/>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="assistant-tabs">
+                <button class="assistant-tab active" data-panel="merchandising">
+                    <svg width="20" height="20" viewBox="0 0 20 20">
+                        <rect x="3" y="3" width="14" height="14" stroke="currentColor" fill="none"/>
+                        <path d="M7 3v4M13 3v4M3 7h14" stroke="currentColor"/>
+                    </svg>
+                    商品管理 PM
+                </button>
+                <button class="assistant-tab" data-panel="tracking">
+                    <svg width="20" height="20" viewBox="0 0 20 20">
+                        <circle cx="10" cy="10" r="7" stroke="currentColor" fill="none"/>
+                        <path d="M10 6v4l3 3" stroke="currentColor"/>
+                    </svg>
+                    郵件追蹤
+                </button>
+                <button class="assistant-tab" data-panel="followup">
+                    <svg width="20" height="20" viewBox="0 0 20 20">
+                        <path d="M10 2v8l5 3" stroke="currentColor" fill="none"/>
+                        <circle cx="10" cy="10" r="8" stroke="currentColor" fill="none"/>
+                    </svg>
+                    自動跟催
+                </button>
+            </div>
+
+            <!-- Merchandising PM 面板 -->
+            <div class="assistant-panel active" id="merchandisingPanel">
+                <div class="panel-section">
+                    <h3>📦 產品管道追蹤</h3>
+                    <div class="pipeline-cards">
+                        <div class="pipeline-card">
+                            <div class="card-header">
+                                <h4>X100 智能設備</h4>
+                                <span class="status-badge active">進行中</span>
+                            </div>
+                            <div class="card-stats">
+                                <div class="stat">
+                                    <span class="stat-label">潛在客戶</span>
+                                    <span class="stat-value">12</span>
+                                </div>
+                                <div class="stat">
+                                    <span class="stat-label">報價已發</span>
+                                    <span class="stat-value">8</span>
+                                </div>
+                                <div class="stat">
+                                    <span class="stat-label">等待回覆</span>
+                                    <span class="stat-value urgent">5</span>
+                                </div>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 65%;"></div>
+                            </div>
+                            <p class="conversion-rate">轉換率: 65% <span class="trend up">↑ 12%</span></p>
+                        </div>
+
+                        <div class="pipeline-card">
+                            <div class="card-header">
+                                <h4>Y200 系列</h4>
+                                <span class="status-badge planning">規劃中</span>
+                            </div>
+                            <div class="card-stats">
+                                <div class="stat">
+                                    <span class="stat-label">潛在客戶</span>
+                                    <span class="stat-value">7</span>
+                                </div>
+                                <div class="stat">
+                                    <span class="stat-label">報價已發</span>
+                                    <span class="stat-value">3</span>
+                                </div>
+                                <div class="stat">
+                                    <span class="stat-label">等待回覆</span>
+                                    <span class="stat-value">2</span>
+                                </div>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 42%;"></div>
+                            </div>
+                            <p class="conversion-rate">轉換率: 42% <span class="trend down">↓ 5%</span></p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel-section">
+                    <h3>📊 本週銷售洞察</h3>
+                    <div class="insights-grid">
+                        <div class="insight-card">
+                            <div class="insight-icon">💰</div>
+                            <div class="insight-data">
+                                <p class="insight-label">預估成交額</p>
+                                <h4 class="insight-value">$285,000</h4>
+                                <span class="insight-change positive">+23% vs 上週</span>
+                            </div>
+                        </div>
+                        <div class="insight-card">
+                            <div class="insight-icon">📈</div>
+                            <div class="insight-data">
+                                <p class="insight-label">回覆率</p>
+                                <h4 class="insight-value">78%</h4>
+                                <span class="insight-change positive">+5% vs 上週</span>
+                            </div>
+                        </div>
+                        <div class="insight-card">
+                            <div class="insight-icon">⏱️</div>
+                            <div class="insight-data">
+                                <p class="insight-label">平均回覆時間</p>
+                                <h4 class="insight-value">2.3 小時</h4>
+                                <span class="insight-change negative">+0.5h vs 上週</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel-section">
+                    <h3>🎯 AI 建議行動</h3>
+                    <div class="action-list">
+                        <div class="action-item priority-high">
+                            <div class="action-icon">⚡</div>
+                            <div class="action-content">
+                                <h4>立即跟進：王小明 - ABC 科技</h4>
+                                <p>客戶 2 小時前發送第二封詢問郵件，建議立即回覆以提高成交率</p>
+                                <button class="action-btn-small primary">立即處理</button>
+                            </div>
+                        </div>
+                        <div class="action-item priority-medium">
+                            <div class="action-icon">📅</div>
+                            <div class="action-content">
+                                <h4>今日跟進：李美玲 - XYZ 貿易</h4>
+                                <p>物流確認郵件已 1 天未回覆，今日截止日期</p>
+                                <button class="action-btn-small secondary">查看詳情</button>
+                            </div>
+                        </div>
+                        <div class="action-item priority-low">
+                            <div class="action-icon">💡</div>
+                            <div class="action-content">
+                                <h4>機會識別：3 個新的高價值客戶</h4>
+                                <p>AI 識別出 3 個符合您目標客戶畫像的新聯絡人</p>
+                                <button class="action-btn-small secondary">查看列表</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 郵件追蹤面板 -->
+            <div class="assistant-panel" id="trackingPanel">
+                <div class="panel-section">
+                    <h3>📧 郵件狀態追蹤</h3>
+                    <div class="tracking-timeline">
+                        <div class="timeline-item completed">
+                            <div class="timeline-marker">✓</div>
+                            <div class="timeline-content">
+                                <h4>郵件已發送</h4>
+                                <p>發送給: 王小明 (wangxm@abc-tech.com)</p>
+                                <span class="timeline-time">今天 上午 9:35</span>
+                            </div>
+                        </div>
+                        <div class="timeline-item completed">
+                            <div class="timeline-marker">✓</div>
+                            <div class="timeline-content">
+                                <h4>郵件已送達</h4>
+                                <p>成功送達收件人郵件伺服器</p>
+                                <span class="timeline-time">今天 上午 9:36</span>
+                            </div>
+                        </div>
+                        <div class="timeline-item completed">
+                            <div class="timeline-marker">✓</div>
+                            <div class="timeline-content">
+                                <h4>郵件已開啟</h4>
+                                <p>收件人已開啟郵件 (開啟 3 次)</p>
+                                <span class="timeline-time">今天 上午 10:12</span>
+                            </div>
+                        </div>
+                        <div class="timeline-item completed">
+                            <div class="timeline-marker">✓</div>
+                            <div class="timeline-content">
+                                <h4>連結已點擊</h4>
+                                <p>點擊了產品規格文件連結</p>
+                                <span class="timeline-time">今天 上午 10:15</span>
+                            </div>
+                        </div>
+                        <div class="timeline-item pending">
+                            <div class="timeline-marker">⏳</div>
+                            <div class="timeline-content">
+                                <h4>等待回覆</h4>
+                                <p>AI 預測回覆時間: 今天下午 2:00 - 4:00</p>
+                                <span class="timeline-time">預計回覆機率: 85%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel-section">
+                    <h3>📊 互動分析</h3>
+                    <div class="engagement-stats">
+                        <div class="stat-row">
+                            <span class="stat-label">開啟率</span>
+                            <div class="stat-bar">
+                                <div class="stat-bar-fill" style="width: 92%;"></div>
+                            </div>
+                            <span class="stat-percentage">92%</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">點擊率</span>
+                            <div class="stat-bar">
+                                <div class="stat-bar-fill" style="width: 68%;"></div>
+                            </div>
+                            <span class="stat-percentage">68%</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">回覆率</span>
+                            <div class="stat-bar">
+                                <div class="stat-bar-fill" style="width: 75%;"></div>
+                            </div>
+                            <span class="stat-percentage">75%</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">閱讀時間</span>
+                            <div class="stat-bar">
+                                <div class="stat-bar-fill" style="width: 85%;"></div>
+                            </div>
+                            <span class="stat-percentage">平均 2.5 分鐘</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel-section">
+                    <h3>🔍 客戶行為洞察</h3>
+                    <div class="behavior-insights">
+                        <div class="behavior-item">
+                            <span class="behavior-icon">👁️</span>
+                            <p><strong>王小明</strong>在上午 10:12 打開郵件，停留 3 分鐘 20 秒</p>
+                        </div>
+                        <div class="behavior-item">
+                            <span class="behavior-icon">🖱️</span>
+                            <p>點擊了<strong>產品規格 PDF</strong>連結，下載文件</p>
+                        </div>
+                        <div class="behavior-item">
+                            <span class="behavior-icon">🔄</span>
+                            <p>之後又回到郵件<strong>重複閱讀</strong>了 2 次</p>
+                        </div>
+                        <div class="behavior-item ai-prediction">
+                            <span class="behavior-icon">🤖</span>
+                            <p><strong>AI 預測：</strong>根據行為分析，客戶高度感興趣，建議在 2 小時內主動跟進</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 自動跟催面板 -->
+            <div class="assistant-panel" id="followupPanel">
+                <div class="panel-section">
+                    <h3>⏰ 自動跟催排程</h3>
+                    <div class="followup-list">
+                        <div class="followup-item active">
+                            <div class="followup-header">
+                                <div class="followup-contact">
+                                    <img src="https://i.pravatar.cc/40?img=1" alt="Contact">
+                                    <div>
+                                        <h4>王小明 - ABC 科技</h4>
+                                        <p>產品報價諮詢</p>
+                                    </div>
+                                </div>
+                                <span class="followup-status active">進行中</span>
+                            </div>
+                            <div class="followup-timeline">
+                                <div class="followup-step completed">
+                                    <span class="step-number">1</span>
+                                    <div class="step-content">
+                                        <p><strong>首次聯繫</strong> - 已完成</p>
+                                        <span class="step-time">今天 上午 9:35</span>
+                                    </div>
+                                </div>
+                                <div class="followup-step current">
+                                    <span class="step-number">2</span>
+                                    <div class="step-content">
+                                        <p><strong>第一次跟進</strong> - 進行中</p>
+                                        <span class="step-time">排程: 今天 下午 2:00</span>
+                                        <div class="step-actions">
+                                            <button class="step-btn">編輯</button>
+                                            <button class="step-btn">立即發送</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="followup-step pending">
+                                    <span class="step-number">3</span>
+                                    <div class="step-content">
+                                        <p><strong>第二次跟進</strong> - 待執行</p>
+                                        <span class="step-time">排程: 明天 上午 10:00</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="followup-actions">
+                                <button class="action-btn-small">暫停跟催</button>
+                                <button class="action-btn-small">標記已完成</button>
+                                <button class="action-btn-small primary">調整排程</button>
+                            </div>
+                        </div>
+
+                        <div class="followup-item">
+                            <div class="followup-header">
+                                <div class="followup-contact">
+                                    <img src="https://i.pravatar.cc/40?img=5" alt="Contact">
+                                    <div>
+                                        <h4>李美玲 - XYZ 貿易</h4>
+                                        <p>物流配送確認</p>
+                                    </div>
+                                </div>
+                                <span class="followup-status urgent">緊急</span>
+                            </div>
+                            <div class="followup-timeline">
+                                <div class="followup-step completed">
+                                    <span class="step-number">1</span>
+                                    <div class="step-content">
+                                        <p><strong>首次聯繫</strong> - 已完成</p>
+                                        <span class="step-time">昨天 下午 3:20</span>
+                                    </div>
+                                </div>
+                                <div class="followup-step overdue">
+                                    <span class="step-number">2</span>
+                                    <div class="step-content">
+                                        <p><strong>第一次跟進</strong> - 已逾期</p>
+                                        <span class="step-time">原定: 今天 上午 9:00</span>
+                                        <div class="step-actions">
+                                            <button class="step-btn urgent">立即處理</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="followup-item">
+                            <div class="followup-header">
+                                <div class="followup-contact">
+                                    <img src="https://i.pravatar.cc/40?img=8" alt="Contact">
+                                    <div>
+                                        <h4>張建國 - DEF 企業</h4>
+                                        <p>產品諮詢</p>
+                                    </div>
+                                </div>
+                                <span class="followup-status scheduled">已排程</span>
+                            </div>
+                            <div class="followup-summary">
+                                <p>下次跟進: 明天 下午 3:00</p>
+                                <button class="action-btn-small">查看詳情</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel-section">
+                    <h3>🤖 智能跟催設定</h3>
+                    <div class="auto-followup-settings">
+                        <div class="setting-item">
+                            <div class="setting-label">
+                                <h4>自動跟催規則</h4>
+                                <p>根據客戶類型和郵件內容自動設定跟催計劃</p>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" checked>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div class="setting-item">
+                            <div class="setting-label">
+                                <h4>智能時間優化</h4>
+                                <p>AI 根據客戶活躍時間自動調整發送時間</p>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" checked>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div class="setting-item">
+                            <div class="setting-label">
+                                <h4>自動內容生成</h4>
+                                <p>AI 自動生成個性化跟進郵件內容</p>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel-section">
+                    <h3>📈 跟催效果分析</h3>
+                    <div class="followup-analytics">
+                        <div class="analytics-card">
+                            <h4>本週跟催統計</h4>
+                            <div class="analytics-stats">
+                                <div class="stat-item">
+                                    <span class="stat-number">24</span>
+                                    <span class="stat-label">自動跟催郵件</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-number">18</span>
+                                    <span class="stat-label">成功獲得回覆</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-number">75%</span>
+                                    <span class="stat-label">回覆率</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="analytics-card">
+                            <h4>最佳跟進時機</h4>
+                            <div class="best-times">
+                                <div class="time-slot">
+                                    <span class="time-icon">🌅</span>
+                                    <span class="time-label">上午 9:00 - 11:00</span>
+                                    <span class="time-rate">82% 回覆率</span>
+                                </div>
+                                <div class="time-slot">
+                                    <span class="time-icon">🌆</span>
+                                    <span class="time-label">下午 2:00 - 4:00</span>
+                                    <span class="time-rate">78% 回覆率</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel-section">
+                    <button class="create-followup-btn">
+                        <svg width="20" height="20" viewBox="0 0 20 20">
+                            <path d="M10 4v12M4 10h12" stroke="white" stroke-width="2"/>
+                        </svg>
+                        建立新的跟催計劃
+                    </button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- 底部狀態列 -->
+    <footer class="status-bar">
+        <div class="status-left">
+            <span class="status-item">
+                <svg width="16" height="16" viewBox="0 0 16 16">
+                    <circle cx="8" cy="8" r="6" fill="#00C853"/>
+                </svg>
+                系統正常運行
+            </span>
+            <span class="status-item">最後同步: 剛剛</span>
         </div>
-    </div>
+        <div class="status-right">
+            <span class="status-item">AI 處理中: 3 項任務</span>
+            <span class="status-item">今日處理: 28 封郵件</span>
+        </div>
+    </footer>
 
-
-    <script src="js/bootstrap.min.js"></script>
+    <script src="js/outlook-ai.js"></script>
 </body>
-
 </html>
