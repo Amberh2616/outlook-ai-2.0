@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Outlook AI - 演示版</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f5f5f5; }
+        .header { background: #0078d4; color: white; padding: 15px 30px; }
+        .header h1 { font-size: 24px; }
+        .container { max-width: 1400px; margin: 20px auto; display: grid; grid-template-columns: 300px 1fr 350px; gap: 20px; padding: 0 20px; }
+        .panel { background: white; border-radius: 8px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .contact-card { padding: 15px; margin-bottom: 10px; background: #f9f9f9; border-radius: 8px; cursor: pointer; transition: 0.2s; }
+        .contact-card:hover { background: #e3f2fd; transform: translateY(-2px); }
+        .avatar { width: 50px; height: 50px; border-radius: 50%; background: #0078d4; color: white; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: bold; margin-bottom: 10px; }
+        .email-item { padding: 15px; border-bottom: 1px solid #eee; cursor: pointer; }
+        .email-item:hover { background: #f5f5f5; }
+        .unread { background: #fff8e1; font-weight: bold; }
+        .priority-high { border-left: 4px solid #f44336; }
+        .priority-urgent { border-left: 4px solid #ff6b6b; }
+        .ai-panel h3 { color: #0078d4; margin-bottom: 15px; }
+        .deal-card { background: #f0f8ff; padding: 15px; border-radius: 8px; margin-bottom: 10px; }
+        .btn { background: #0078d4; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; }
+        .btn:hover { background: #106ebe; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📧 Outlook AI - 智能郵件管理系統</h1>
+    </div>
+
+    <div class="container">
+        <!-- 左側：聯絡人 -->
+        <div class="panel">
+            <h2>📋 聯絡人</h2>
+            <div id="contacts"></div>
+        </div>
+
+        <!-- 中間：郵件列表 -->
+        <div class="panel">
+            <h2>📬 郵件列表</h2>
+            <div id="emails"></div>
+        </div>
+
+        <!-- 右側：AI 助理 -->
+        <div class="panel ai-panel">
+            <h3>🤖 AI 智能分析</h3>
+            <div id="ai-analysis">
+                <h4>📊 Merchandising PM</h4>
+                <div class="deal-card">
+                    <strong>王小明 - ABC 科技</strong>
+                    <p>💰 商機價值: $50K-$100K</p>
+                    <p>🎯 意向度: 95%</p>
+                    <p>⏰ 截止: 本月底</p>
+                </div>
+                <div class="deal-card">
+                    <strong>陳雅婷 - GHI 集團</strong>
+                    <p>💰 商機價值: $10M+ 年度</p>
+                    <p>🎯 意向度: 98%</p>
+                    <p>📈 戰略合作機會</p>
+                </div>
+
+                <h4 style="margin-top: 20px;">📈 Email 追蹤</h4>
+                <p>📧 總郵件: 5 封</p>
+                <p>👀 開信率: 94%</p>
+                <p>⚡ 待回覆: 4 封</p>
+
+                <h4 style="margin-top: 20px;">⏰ 自動跟催</h4>
+                <p>🔴 緊急: 1 封 (今日截止)</p>
+                <p>🟡 高優先: 2 封</p>
+                <p>🟢 正常: 2 封</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const emails = [
+            {
+                id: 1,
+                from: "王小明",
+                company: "ABC 科技",
+                subject: "關於產品報價的討論",
+                preview: "我們對貴公司的產品很感興趣，預計採購 500-1000 件，預算 $50K-$100K...",
+                unread: true,
+                priority: "high"
+            },
+            {
+                id: 2,
+                from: "李美玲",
+                company: "XYZ 貿易",
+                subject: "物流配送時間確認",
+                preview: "請確認訂單 #XYZ-2024-001 的配送時間，今日截止...",
+                unread: true,
+                priority: "urgent"
+            },
+            {
+                id: 3,
+                from: "陳雅婷",
+                company: "GHI 集團",
+                subject: "新產品合作機會",
+                preview: "我們是業內領先的經銷商，年採購額超過 $10M，想討論長期合作...",
+                unread: true,
+                priority: "high"
+            },
+            {
+                id: 4,
+                from: "張建國",
+                company: "DEF 企業",
+                subject: "產品技術規格諮詢",
+                preview: "請問 X100 系列是否支持工作溫度 -20°C 至 60°C，IP67 防水...",
+                unread: false,
+                priority: "medium"
+            },
+            {
+                id: 5,
+                from: "劉經理",
+                company: "JKL Trading",
+                subject: "Re: 上月訂單進度",
+                preview: "訂單 #2024-1015 目前進度如何？客戶一直在催...",
+                unread: false,
+                priority: "medium"
+            }
+        ];
+
+        // 顯示聯絡人
+        const contactsDiv = document.getElementById('contacts');
+        emails.forEach(email => {
+            const card = document.createElement('div');
+            card.className = 'contact-card';
+            card.innerHTML = `
+                <div class="avatar">${email.from.charAt(0)}</div>
+                <strong>${email.from}</strong>
+                <div style="font-size: 12px; color: #666;">${email.company}</div>
+                <div style="font-size: 11px; color: #999; margin-top: 5px;">
+                    ${email.priority === 'urgent' ? '🔴 緊急' : email.priority === 'high' ? '🟡 高優先' : '🟢 正常'}
+                </div>
+            `;
+            contactsDiv.appendChild(card);
+        });
+
+        // 顯示郵件
+        const emailsDiv = document.getElementById('emails');
+        emails.forEach(email => {
+            const item = document.createElement('div');
+            item.className = `email-item ${email.unread ? 'unread' : ''} priority-${email.priority}`;
+            item.innerHTML = `
+                <strong>${email.from}</strong> - ${email.company}
+                <div style="font-size: 14px; margin: 5px 0;">${email.subject}</div>
+                <div style="font-size: 12px; color: #666;">${email.preview}</div>
+            `;
+            item.onclick = () => alert(`郵件詳情：\n\n寄件人：${email.from}\n主旨：${email.subject}\n\n${email.preview}`);
+            emailsDiv.appendChild(item);
+        });
+
+        console.log('✅ Outlook AI 演示版已載入！');
+        console.log('📧 已載入 5 封演示郵件');
+    </script>
+</body>
+</html>
