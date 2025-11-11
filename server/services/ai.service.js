@@ -3,9 +3,22 @@
 // 郵件分析、生成回覆、提取關鍵點等
 // ===================================
 
+const OpenAI = require('openai');
+
 class AIService {
     constructor() {
         this.enabled = process.env.ENABLE_AI_ANALYSIS === 'true';
+
+        // 初始化 OpenAI 客戶端
+        if (this.enabled && process.env.OPENAI_API_KEY) {
+            this.openai = new OpenAI({
+                apiKey: process.env.OPENAI_API_KEY
+            });
+            this.model = 'gpt-4o'; // 使用 GPT-4o 模型
+            console.log('✅ OpenAI AI Service initialized with API key');
+        } else {
+            console.log('⚠️  AI Service running in basic mode (no OpenAI API)');
+        }
     }
 
     // 分析郵件
@@ -37,6 +50,37 @@ class AIService {
         }
 
         return analysis;
+    }
+
+    // 批次分析多封郵件
+    async analyzeEmailBatch(emails) {
+        if (!emails || emails.length === 0) {
+            return [];
+        }
+
+        // 使用 Promise.all 平行處理，但限制同時處理數量避免 rate limit
+        const batchSize = 5;
+        const results = [];
+
+        for (let i = 0; i < emails.length; i += batchSize) {
+            const batch = emails.slice(i, i + batchSize);
+            const batchResults = await Promise.all(
+                batch.map(email => this.analyzeEmail(email))
+            );
+            results.push(...batchResults);
+
+            // 避免 rate limit，批次間休息 1 秒
+            if (i + batchSize < emails.length && this.enabled && this.openai) {
+                await this.sleep(1000);
+            }
+        }
+
+        return results;
+    }
+
+    // Sleep utility
+    sleep(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
     }
 
     // 生成摘要
@@ -304,15 +348,78 @@ class AIService {
         return 'unknown';
     }
 
-    // 使用 OpenAI API 增強分析（可選）
+    // 使用 OpenAI API 增強分析
     async enhanceWithAI(content, subject) {
-        // TODO: 實現 OpenAI API 調用
-        // 這裡可以使用 GPT-4 進行更深入的分析
+        if (!this.openai) {
+            return {
+                aiEnhanced: false,
+                confidence: 0
+            };
+        }
 
-        return {
-            aiEnhanced: true,
-            confidence: 0.95
-        };
+        try {
+            const prompt = `你是專業的商業郵件分析助手。請分析以下郵件並提供結構化的分析結果。
+
+郵件資訊：
+主旨: ${subject || '無主旨'}
+內容:
+${content}
+
+請以 JSON 格式回應，包含以下欄位：
+{
+    "opportunityValue": "估計商業價值金額（例如 $50K-$100K），如果無法估計則為 null",
+    "commercialIntent": "商業意圖評分 0-100，100 表示非常明確的購買意圖",
+    "keyInsights": ["深入洞察1", "深入洞察2"],
+    "suggestedResponse": "建議的專業回覆內容（繁體中文）",
+    "nextSteps": ["後續步驟1", "後續步驟2"],
+    "risks": ["潛在風險或需要注意的點"],
+    "aiConfidence": "AI 分析的信心指數 0-1"
+}`;
+
+            const completion = await this.openai.chat.completions.create({
+                model: this.model,
+                messages: [
+                    { role: 'system', content: '你是專業的商業郵件分析專家，擅長識別商業機會和客戶需求。' },
+                    { role: 'user', content: prompt }
+                ],
+                response_format: { type: 'json_object' },
+                temperature: 0.7,
+                max_tokens: 1000
+            });
+
+            const aiAnalysis = JSON.parse(completion.choices[0].message.content);
+
+            console.log(`✅ AI enhanced analysis completed: ${subject}`);
+
+            return {
+                aiEnhanced: true,
+                ...aiAnalysis,
+                tokenUsage: completion.usage,
+                apiCost: this.calculateAPICost(completion.usage)
+            };
+
+        } catch (error) {
+            console.error('❌ OpenAI API error:', error.message);
+            return {
+                aiEnhanced: false,
+                error: error.message,
+                confidence: 0
+            };
+        }
+    }
+
+    // 計算 API 使用成本
+    calculateAPICost(usage) {
+        if (!usage) return 0;
+
+        // GPT-4o 定價 (2024)
+        const inputCostPer1k = 0.0025;  // $0.0025 per 1K input tokens
+        const outputCostPer1k = 0.010;  // $0.010 per 1K output tokens
+
+        const inputCost = (usage.prompt_tokens / 1000) * inputCostPer1k;
+        const outputCost = (usage.completion_tokens / 1000) * outputCostPer1k;
+
+        return parseFloat((inputCost + outputCost).toFixed(6));
     }
 
     // 生成回覆
@@ -323,6 +430,16 @@ class AIService {
             includeGreeting = true,
             includeSignature = true
         } = context;
+
+        // 如果啟用 OpenAI，使用 AI 生成回覆
+        if (this.enabled && this.openai) {
+            try {
+                return await this.generateAIReply(emailContent, context);
+            } catch (error) {
+                console.error('❌ AI reply generation failed, using template:', error.message);
+                // 失敗時回退到模板回覆
+            }
+        }
 
         // 分析郵件內容
         const analysis = await this.analyzeEmail({ content: emailContent });
@@ -346,6 +463,109 @@ class AIService {
             suggestedSubject: `Re: ${context.originalSubject || ''}`,
             analysis
         };
+    }
+
+    // 使用 OpenAI 生成 AI 回覆
+    async generateAIReply(emailContent, context = {}) {
+        const prompt = `你是專業的商業郵件助手。請為以下郵件撰寫一封專業、友善且有效的回覆。
+
+原始郵件：
+主旨: ${context.originalSubject || '無主旨'}
+寄件人: ${context.from || '未知'}
+內容:
+${emailContent}
+
+${context.additionalContext ? `額外資訊: ${context.additionalContext}` : ''}
+
+回覆要求：
+1. 使用繁體中文
+2. 保持專業但友善的語氣
+3. 針對郵件內容提供具體且有價值的回應
+4. 如果是詢價或合作，展現積極態度但保留細節待後續討論
+5. 結尾提供明確的後續步驟或行動呼籲
+6. 適當長度（150-300字）
+
+請直接提供回覆內容（包含稱呼和結尾，但不需要包含主旨）：`;
+
+        const completion = await this.openai.chat.completions.create({
+            model: this.model,
+            messages: [
+                { role: 'system', content: '你是專業的商業郵件回覆助手，擅長撰寫得體且有效的商業郵件。' },
+                { role: 'user', content: prompt }
+            ],
+            temperature: 0.8,
+            max_tokens: 600
+        });
+
+        const reply = completion.choices[0].message.content.trim();
+
+        console.log(`✅ AI reply generated for: ${context.originalSubject}`);
+
+        return {
+            content: reply,
+            aiGenerated: true,
+            suggestedSubject: `Re: ${context.originalSubject || ''}`,
+            tokenUsage: completion.usage,
+            apiCost: this.calculateAPICost(completion.usage)
+        };
+    }
+
+    // 從郵件中提取待辦事項
+    async extractTodos(emailContent, emailSubject = '') {
+        if (!this.enabled || !this.openai) {
+            // 基礎版本 - 返回通用待辦事項
+            return [
+                { text: '查看並回覆郵件', priority: 'medium', deadline: null },
+                { text: '跟進客戶需求', priority: 'medium', deadline: null }
+            ];
+        }
+
+        try {
+            const prompt = `請從以下郵件中提取需要執行的待辦事項。
+
+郵件主旨: ${emailSubject}
+郵件內容:
+${emailContent}
+
+請以 JSON 格式回應，包含一個 "todos" 陣列，每個待辦事項包含：
+{
+    "todos": [
+        {
+            "text": "待辦事項描述（簡潔明確）",
+            "priority": "high" | "medium" | "low",
+            "deadline": "建議完成日期 MM/DD 格式，如果無法確定則為 null",
+            "category": "reply" | "followup" | "preparation" | "meeting" | "other"
+        }
+    ]
+}
+
+如果沒有明確的待辦事項，請根據郵件內容提供 2-3 個合理的後續行動建議。`;
+
+            const completion = await this.openai.chat.completions.create({
+                model: this.model,
+                messages: [
+                    { role: 'system', content: '你是專業的任務管理助手，擅長從郵件中提取行動項目。' },
+                    { role: 'user', content: prompt }
+                ],
+                response_format: { type: 'json_object' },
+                temperature: 0.7,
+                max_tokens: 400
+            });
+
+            const result = JSON.parse(completion.choices[0].message.content);
+            const todos = result.todos || [];
+
+            console.log(`✅ Extracted ${todos.length} todos from email: ${emailSubject}`);
+
+            return todos;
+
+        } catch (error) {
+            console.error('❌ Todo extraction error:', error.message);
+            return [
+                { text: '查看並回覆郵件', priority: 'medium', deadline: null },
+                { text: '跟進客戶需求', priority: 'medium', deadline: null }
+            ];
+        }
     }
 
     // 生成諮詢回覆

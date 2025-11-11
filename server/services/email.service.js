@@ -5,11 +5,13 @@
 const Imap = require('imap');
 const { simpleParser } = require('mailparser');
 const nodemailer = require('nodemailer');
+const aiService = require('./ai.service');
 
 class EmailService {
     constructor() {
         this.imapConfig = null;
         this.smtpTransporter = null;
+        this.aiService = aiService;
         this.initializeService();
     }
 
@@ -119,12 +121,20 @@ class EmailService {
             limit = 50,
             offset = 0,
             unreadOnly = false,
-            since = null
+            since = null,
+            includeAIAnalysis = false
         } = options;
 
         // 演示模式：返回模擬數據
         if (this.demoMode) {
-            return this.getDemoEmails(limit);
+            const emails = await this.getDemoEmails(limit);
+
+            // 如果需要 AI 分析，為每封郵件添加分析結果
+            if (includeAIAnalysis) {
+                return await this.addAIAnalysisToEmails(emails);
+            }
+
+            return emails;
         }
 
         return new Promise((resolve, reject) => {
@@ -223,14 +233,56 @@ class EmailService {
                 reject(err);
             });
 
-            imap.once('end', () => {
+            imap.once('end', async () => {
                 // 排序郵件（最新的在前）
                 emails.sort((a, b) => new Date(b.date) - new Date(a.date));
-                resolve(emails);
+
+                // 如果需要 AI 分析，為每封郵件添加分析結果
+                if (options.includeAIAnalysis) {
+                    const emailsWithAI = await this.addAIAnalysisToEmails(emails);
+                    resolve(emailsWithAI);
+                } else {
+                    resolve(emails);
+                }
             });
 
             imap.connect();
         });
+    }
+
+    // 為郵件添加 AI 分析結果
+    async addAIAnalysisToEmails(emails) {
+        if (!emails || emails.length === 0) {
+            return emails;
+        }
+
+        console.log(`🤖 正在為 ${emails.length} 封郵件進行 AI 分析...`);
+
+        try {
+            // 準備郵件數據供 AI 分析
+            const emailsForAnalysis = emails.map(email => ({
+                content: email.text || email.bodyPreview || '',
+                subject: email.subject || '',
+                from: email.from?.address || email.from?.name || ''
+            }));
+
+            // 批次分析
+            const analyses = await this.aiService.analyzeEmailBatch(emailsForAnalysis);
+
+            // 將分析結果合併到原始郵件
+            const emailsWithAI = emails.map((email, index) => ({
+                ...email,
+                aiAnalysis: analyses[index] || null
+            }));
+
+            console.log(`✅ AI 分析完成`);
+
+            return emailsWithAI;
+        } catch (error) {
+            console.error('❌ AI 分析失敗:', error.message);
+            // 分析失敗時返回原始郵件，不影響主要功能
+            return emails;
+        }
     }
 
     // 獲取單個郵件

@@ -142,4 +142,103 @@ router.post('/sentiment', async (req, res) => {
     }
 });
 
+// AI 提取待辦事項
+router.post('/extract-todos', async (req, res) => {
+    try {
+        const { emailContent, emailSubject } = req.body;
+
+        if (!emailContent) {
+            return res.status(400).json({
+                success: false,
+                error: 'Email content is required'
+            });
+        }
+
+        const todos = await aiService.extractTodos(emailContent, emailSubject);
+
+        res.json({
+            success: true,
+            todos
+        });
+    } catch (error) {
+        console.error('Extract todos error:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+// AI 批次分析郵件
+router.post('/batch-analyze', async (req, res) => {
+    try {
+        const { emails } = req.body;
+
+        if (!emails || !Array.isArray(emails)) {
+            return res.status(400).json({
+                success: false,
+                error: 'Emails array is required'
+            });
+        }
+
+        if (emails.length === 0) {
+            return res.json({
+                success: true,
+                results: []
+            });
+        }
+
+        // 限制批次大小避免超時
+        if (emails.length > 20) {
+            return res.status(400).json({
+                success: false,
+                error: 'Batch size cannot exceed 20 emails'
+            });
+        }
+
+        const results = await aiService.analyzeEmailBatch(emails);
+
+        res.json({
+            success: true,
+            results,
+            count: results.length
+        });
+    } catch (error) {
+        console.error('Batch analyze error:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+// 取得 AI 服務狀態
+router.get('/status', (req, res) => {
+    try {
+        const status = {
+            enabled: aiService.enabled,
+            hasOpenAI: !!aiService.openai,
+            model: aiService.model || 'N/A',
+            features: {
+                emailAnalysis: true,
+                replyGeneration: true,
+                todoExtraction: true,
+                batchProcessing: true,
+                aiEnhancement: aiService.enabled && !!aiService.openai
+            }
+        };
+
+        res.json({
+            success: true,
+            status
+        });
+    } catch (error) {
+        console.error('Status check error:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
 module.exports = router;
