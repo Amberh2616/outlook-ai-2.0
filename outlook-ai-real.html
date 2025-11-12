@@ -1,0 +1,1396 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Outlook AI 2.0 - 真實版（整合 OpenAI API）</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', -apple-system, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1800px;
+            margin: 0 auto;
+        }
+
+        /* 頂部工具列 */
+        .toolbar {
+            background: white;
+            border-radius: 16px;
+            padding: 20px 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .toolbar h1 {
+            font-size: 28px;
+            color: #2d3748;
+            flex: 1;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .status-indicator.connected {
+            background: #c6f6d5;
+            color: #2f855a;
+        }
+
+        .status-indicator.loading {
+            background: #feebc8;
+            color: #c05621;
+        }
+
+        .status-indicator.error {
+            background: #fed7d7;
+            color: #c53030;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #e2e8f0;
+            color: #4a5568;
+        }
+
+        /* 主要內容區 */
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 20px;
+        }
+
+        /* 左側：寄件人管理區 */
+        .senders-section {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            max-height: calc(100vh - 140px);
+            overflow-y: auto;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .section-header h2 {
+            font-size: 24px;
+            color: #2d3748;
+        }
+
+        /* 三狀態區域 */
+        .status-zone {
+            padding: 20px;
+            border-radius: 12px;
+            border: 2px dashed #e2e8f0;
+            min-height: 150px;
+            margin-bottom: 24px;
+            transition: all 0.3s;
+        }
+
+        .status-zone.drag-over {
+            border-color: #667eea;
+            background: #f7fafc;
+            transform: scale(1.02);
+        }
+
+        .status-zone.pending {
+            background: #fff5f5;
+            border-color: #feb2b2;
+        }
+
+        .status-zone.processing {
+            background: #fffaf0;
+            border-color: #fbd38d;
+        }
+
+        .status-zone.completed {
+            background: #f0fff4;
+            border-color: #9ae6b4;
+        }
+
+        .zone-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .zone-header h3 {
+            font-size: 18px;
+            color: #2d3748;
+        }
+
+        .zone-count {
+            background: rgba(0,0,0,0.1);
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        /* 寄件人卡片網格 */
+        .senders-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 12px;
+        }
+
+        .sender-card {
+            background: white;
+            padding: 16px;
+            border-radius: 12px;
+            text-align: center;
+            cursor: move;
+            transition: all 0.3s;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            position: relative;
+        }
+
+        .sender-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+        }
+
+        .sender-card.dragging {
+            opacity: 0.5;
+            transform: rotate(5deg);
+        }
+
+        .sender-card.selected {
+            border: 3px solid #667eea;
+            box-shadow: 0 8px 24px rgba(102, 126, 234, 0.3);
+        }
+
+        .avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            margin: 0 auto 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: bold;
+            color: white;
+            position: relative;
+        }
+
+        .unread-badge {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            background: #fc8181;
+            color: white;
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 10px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .sender-name {
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 4px;
+            font-size: 14px;
+        }
+
+        .sender-email {
+            font-size: 11px;
+            color: #718096;
+            margin-bottom: 8px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .tags {
+            display: flex;
+            gap: 4px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .tag {
+            font-size: 10px;
+            padding: 3px 8px;
+            border-radius: 8px;
+            font-weight: 600;
+        }
+
+        .tag-urgent { background: #fed7d7; color: #c53030; }
+        .tag-high { background: #feebc8; color: #c05621; }
+        .tag-medium { background: #c6f6d5; color: #2f855a; }
+        .tag-value { background: #bee3f8; color: #2c5282; }
+        .tag-ai { background: #e9d8fd; color: #6b46c1; }
+
+        /* 郵件列表 */
+        .emails-list-section {
+            margin-top: 24px;
+            padding-top: 24px;
+            border-top: 2px solid #e2e8f0;
+        }
+
+        .emails-list-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .emails-list-header h3 {
+            font-size: 18px;
+            color: #2d3748;
+        }
+
+        .close-list-btn {
+            background: #e2e8f0;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            color: #4a5568;
+        }
+
+        .close-list-btn:hover {
+            background: #cbd5e0;
+        }
+
+        .email-item {
+            background: #f7fafc;
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+        }
+
+        .email-item:hover {
+            background: #edf2f7;
+            border-left-color: #667eea;
+            transform: translateX(4px);
+        }
+
+        .email-item.selected {
+            background: #e6fffa;
+            border-left-color: #38b2ac;
+        }
+
+        .email-item.unread {
+            background: #ebf8ff;
+            font-weight: 600;
+        }
+
+        .email-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+
+        .email-subject {
+            font-size: 14px;
+            color: #2d3748;
+            font-weight: 600;
+            flex: 1;
+        }
+
+        .email-time {
+            font-size: 12px;
+            color: #718096;
+            margin-left: 12px;
+        }
+
+        .email-preview {
+            font-size: 12px;
+            color: #718096;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        /* 右側：AI 分析面板 */
+        .ai-panel {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            max-height: calc(100vh - 140px);
+            overflow-y: auto;
+        }
+
+        .ai-panel h2 {
+            font-size: 24px;
+            color: #2d3748;
+            margin-bottom: 20px;
+        }
+
+        .ai-section {
+            background: #f7fafc;
+            padding: 16px;
+            border-radius: 12px;
+            margin-bottom: 16px;
+        }
+
+        .ai-section h3 {
+            font-size: 16px;
+            color: #4a5568;
+            margin-bottom: 12px;
+        }
+
+        .note-item {
+            background: white;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .note-item strong {
+            color: #667eea;
+        }
+
+        .ai-cost {
+            background: #fef5e7;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            color: #c05621;
+            margin-top: 8px;
+        }
+
+        /* 郵件內容顯示 */
+        .email-content {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 16px;
+            line-height: 1.8;
+            font-size: 14px;
+            color: #2d3748;
+        }
+
+        .email-content-header {
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 16px;
+            margin-bottom: 16px;
+        }
+
+        .email-content-subject {
+            font-size: 20px;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 12px;
+        }
+
+        .email-content-meta {
+            font-size: 13px;
+            color: #718096;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+            margin-top: 16px;
+            flex-wrap: wrap;
+        }
+
+        .action-btn {
+            padding: 8px 16px;
+            border-radius: 6px;
+            border: 1px solid #e2e8f0;
+            background: white;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.2s;
+        }
+
+        .action-btn:hover {
+            background: #f7fafc;
+            border-color: #667eea;
+        }
+
+        .action-btn.primary {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .action-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* 空狀態 */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #718096;
+        }
+
+        .empty-state-icon {
+            font-size: 64px;
+            margin-bottom: 16px;
+        }
+
+        /* Loading 動畫 */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #e2e8f0;
+            border-top-color: #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* 撰寫郵件彈窗 */
+        .compose-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .compose-modal.active {
+            display: flex;
+        }
+
+        .compose-dialog {
+            background: white;
+            border-radius: 16px;
+            width: 90%;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        .compose-header {
+            padding: 24px 30px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .compose-header h2 {
+            font-size: 20px;
+            color: #2d3748;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 28px;
+            color: #718096;
+            cursor: pointer;
+        }
+
+        .compose-body {
+            padding: 30px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            color: #4a5568;
+            margin-bottom: 8px;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 200px;
+        }
+
+        .compose-footer {
+            padding: 20px 30px;
+            border-top: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        .ai-suggestion {
+            background: #e9d8fd;
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            border-left: 4px solid #6b46c1;
+        }
+
+        .ai-suggestion-header {
+            font-size: 13px;
+            font-weight: 600;
+            color: #6b46c1;
+            margin-bottom: 8px;
+        }
+
+        .ai-suggestion-text {
+            font-size: 13px;
+            color: #4a5568;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 工具列 -->
+        <div class="toolbar">
+            <h1>📧 Outlook AI 2.0 - 真實版</h1>
+            <div id="statusIndicator" class="status-indicator loading">
+                <div class="loading"></div>
+                <span>載入中...</span>
+            </div>
+            <button class="btn btn-primary" onclick="composeEmail()">✉️ 撰寫郵件</button>
+            <button class="btn btn-secondary" onclick="syncEmails()" id="syncBtn">🔄 同步郵件</button>
+        </div>
+
+        <!-- 主要內容 -->
+        <div class="main-content">
+            <!-- 左側：寄件人管理 + 郵件列表 -->
+            <div class="senders-section">
+                <div class="section-header">
+                    <h2>👥 寄件人管理（拖拽管理狀態）</h2>
+                </div>
+
+                <!-- 待處理 -->
+                <div class="status-zone pending" ondrop="drop(event, 'pending')" ondragover="allowDrop(event)" ondragenter="dragEnter(event)" ondragleave="dragLeave(event)">
+                    <div class="zone-header">
+                        <h3>📬 待處理</h3>
+                        <span class="zone-count" id="pendingCount">0</span>
+                    </div>
+                    <div class="senders-grid" id="pendingSenders"></div>
+                </div>
+
+                <!-- 處理中 -->
+                <div class="status-zone processing" ondrop="drop(event, 'processing')" ondragover="allowDrop(event)" ondragenter="dragEnter(event)" ondragleave="dragLeave(event)">
+                    <div class="zone-header">
+                        <h3>⚡ 處理中</h3>
+                        <span class="zone-count" id="processingCount">0</span>
+                    </div>
+                    <div class="senders-grid" id="processingSenders"></div>
+                </div>
+
+                <!-- 已完成 -->
+                <div class="status-zone completed" ondrop="drop(event, 'completed')" ondragover="allowDrop(event)" ondragenter="dragEnter(event)" ondragleave="dragLeave(event)">
+                    <div class="zone-header">
+                        <h3>✅ 已完成</h3>
+                        <span class="zone-count" id="completedCount">0</span>
+                    </div>
+                    <div class="senders-grid" id="completedSenders"></div>
+                </div>
+
+                <!-- 郵件列表（點擊寄件人後顯示） -->
+                <div class="emails-list-section" id="emailsListSection" style="display: none;">
+                    <div class="emails-list-header">
+                        <h3 id="emailsListTitle">📧 郵件列表</h3>
+                        <button class="close-list-btn" onclick="closeEmailsList()">✕ 關閉</button>
+                    </div>
+                    <div id="emailsList"></div>
+                </div>
+            </div>
+
+            <!-- 右側：AI 助理 -->
+            <div class="ai-panel">
+                <h2>🤖 AI 智能分析</h2>
+                <div id="aiDetailContent">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">💡</div>
+                        <div>點擊寄件人卡片或郵件查看 AI 分析</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 撰寫郵件彈窗 -->
+    <div class="compose-modal" id="composeModal">
+        <div class="compose-dialog">
+            <div class="compose-header">
+                <h2>✉️ 撰寫新郵件</h2>
+                <button class="close-btn" onclick="closeCompose()">&times;</button>
+            </div>
+            <div class="compose-body">
+                <div id="aiSuggestionContainer"></div>
+                <div class="form-group">
+                    <label>收件人</label>
+                    <input type="email" id="emailTo" placeholder="example@email.com">
+                </div>
+                <div class="form-group">
+                    <label>主旨</label>
+                    <input type="text" id="emailSubject" placeholder="郵件主旨">
+                </div>
+                <div class="form-group">
+                    <label>內容</label>
+                    <textarea id="emailBody" placeholder="輸入郵件內容..."></textarea>
+                </div>
+            </div>
+            <div class="compose-footer">
+                <button class="btn btn-secondary" onclick="closeCompose()">取消</button>
+                <button class="btn btn-primary" onclick="sendEmail()" id="sendBtn">發送</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ===== 配置 =====
+        const API_BASE = 'http://localhost:3000/api';
+
+        // ===== 全域變數 =====
+        let allEmails = [];
+        let sendersMap = new Map();
+        let selectedSender = null;
+        let selectedEmail = null;
+        let aiEnabled = false;
+
+        // ===== 初始化 =====
+        async function init() {
+            console.log('🚀 Outlook AI 2.0 真實版啟動...');
+
+            // 檢查 AI 服務狀態
+            await checkAIStatus();
+
+            // 載入郵件
+            await loadEmails();
+        }
+
+        // ===== 檢查 AI 狀態 =====
+        async function checkAIStatus() {
+            try {
+                const response = await fetch(`${API_BASE}/ai/status`);
+                const data = await response.json();
+
+                if (data.success) {
+                    aiEnabled = data.status.aiEnhancement;
+                    console.log('🤖 AI 狀態:', aiEnabled ? '已啟用' : '基礎模式');
+                }
+            } catch (error) {
+                console.error('❌ 無法檢查 AI 狀態:', error);
+            }
+        }
+
+        // ===== 載入郵件 =====
+        async function loadEmails() {
+            updateStatus('loading', '載入郵件中...');
+            document.getElementById('syncBtn').disabled = true;
+
+            try {
+                // 獲取郵件（包含 AI 分析）
+                const response = await fetch(`${API_BASE}/email/list?limit=100&includeAI=true`);
+                const data = await response.json();
+
+                if (!data.success) {
+                    throw new Error(data.error || '載入郵件失敗');
+                }
+
+                allEmails = data.emails || [];
+                console.log(`✅ 成功載入 ${allEmails.length} 封郵件`);
+
+                // 處理郵件，按寄件人分組
+                processSenders();
+                renderSenders();
+                updateCounts();
+
+                updateStatus('connected', `已載入 ${allEmails.length} 封郵件`);
+            } catch (error) {
+                console.error('❌ 載入郵件失敗:', error);
+                updateStatus('error', '載入失敗: ' + error.message);
+            } finally {
+                document.getElementById('syncBtn').disabled = false;
+            }
+        }
+
+        // ===== 處理寄件人分組 =====
+        function processSenders() {
+            sendersMap.clear();
+
+            allEmails.forEach(email => {
+                const fromEmail = email.from?.address || email.from?.name || 'unknown@example.com';
+                const fromName = email.from?.name || fromEmail.split('@')[0];
+
+                if (!sendersMap.has(fromEmail)) {
+                    sendersMap.set(fromEmail, {
+                        email: fromEmail,
+                        name: fromName,
+                        avatar: fromName.charAt(0).toUpperCase(),
+                        color: generateColor(fromEmail),
+                        status: 'pending', // 新郵件預設待處理
+                        emails: [],
+                        totalEmails: 0,
+                        unreadEmails: 0,
+                        priority: 'medium',
+                        value: null
+                    });
+                }
+
+                const sender = sendersMap.get(fromEmail);
+                sender.emails.push(email);
+                sender.totalEmails++;
+
+                // 計算未讀數量
+                if (email.flags && !email.flags.includes('\\Seen')) {
+                    sender.unreadEmails++;
+                }
+
+                // 從 AI 分析中提取優先級和價值
+                if (email.aiAnalysis) {
+                    if (email.aiAnalysis.priority === 'high' || email.aiAnalysis.urgency === 'urgent') {
+                        sender.priority = 'high';
+                    }
+                    if (email.aiAnalysis.opportunityValue) {
+                        sender.value = email.aiAnalysis.opportunityValue;
+                    }
+                }
+            });
+
+            console.log(`👥 分組完成: ${sendersMap.size} 位寄件人`);
+        }
+
+        // ===== 生成顏色 =====
+        function generateColor(str) {
+            const colors = [
+                '#667eea', '#f093fb', '#4facfe', '#43e97b', '#fa709a',
+                '#667eea', '#38b2ac', '#ed8936', '#9f7aea', '#48bb78'
+            ];
+            let hash = 0;
+            for (let i = 0; i < str.length; i++) {
+                hash = str.charCodeAt(i) + ((hash << 5) - hash);
+            }
+            return colors[Math.abs(hash) % colors.length];
+        }
+
+        // ===== 更新狀態指示器 =====
+        function updateStatus(status, text) {
+            const indicator = document.getElementById('statusIndicator');
+            indicator.className = `status-indicator ${status}`;
+
+            let icon = '';
+            if (status === 'loading') icon = '<div class="loading"></div>';
+            else if (status === 'connected') icon = '✅';
+            else if (status === 'error') icon = '❌';
+
+            indicator.innerHTML = `${icon}<span>${text}</span>`;
+        }
+
+        // ===== 渲染寄件人卡片 =====
+        function renderSenders() {
+            const pendingDiv = document.getElementById('pendingSenders');
+            const processingDiv = document.getElementById('processingSenders');
+            const completedDiv = document.getElementById('completedSenders');
+
+            pendingDiv.innerHTML = '';
+            processingDiv.innerHTML = '';
+            completedDiv.innerHTML = '';
+
+            sendersMap.forEach((sender, email) => {
+                const card = createSenderCard(sender);
+
+                if (sender.status === 'pending') {
+                    pendingDiv.appendChild(card);
+                } else if (sender.status === 'processing') {
+                    processingDiv.appendChild(card);
+                } else if (sender.status === 'completed') {
+                    completedDiv.appendChild(card);
+                }
+            });
+
+            updateCounts();
+        }
+
+        function createSenderCard(sender) {
+            const card = document.createElement('div');
+            card.className = 'sender-card';
+            if (selectedSender && selectedSender.email === sender.email) {
+                card.classList.add('selected');
+            }
+            card.draggable = true;
+            card.dataset.senderEmail = sender.email;
+            card.ondragstart = drag;
+            card.onclick = (e) => {
+                e.stopPropagation();
+                selectSender(sender);
+            };
+
+            const hasAI = sender.emails.some(e => e.aiAnalysis && e.aiAnalysis.aiEnhanced);
+            const priorityClass = sender.priority === 'urgent' ? 'tag-urgent' :
+                                sender.priority === 'high' ? 'tag-high' : 'tag-medium';
+            const priorityIcon = sender.priority === 'urgent' ? '🔴' :
+                               sender.priority === 'high' ? '🟡' : '🟢';
+
+            card.innerHTML = `
+                <div class="avatar" style="background: ${sender.color}">
+                    ${sender.avatar}
+                    ${sender.unreadEmails > 0 ? `<div class="unread-badge">${sender.unreadEmails}</div>` : ''}
+                </div>
+                <div class="sender-name">${sender.name}</div>
+                <div class="sender-email">${sender.email}</div>
+                <div style="font-size: 12px; color: #718096; margin-bottom: 8px;">
+                    ${sender.totalEmails} 封郵件
+                </div>
+                <div class="tags">
+                    <span class="tag ${priorityClass}">${priorityIcon}</span>
+                    ${sender.value ? `<span class="tag tag-value">${sender.value}</span>` : ''}
+                    ${hasAI ? '<span class="tag tag-ai">🤖 AI</span>' : ''}
+                </div>
+            `;
+
+            return card;
+        }
+
+        // ===== 選擇寄件人 =====
+        function selectSender(sender) {
+            selectedSender = sender;
+            selectedEmail = null;
+            renderSenders();
+            showEmailsList(sender);
+            showSenderAI(sender);
+        }
+
+        // ===== 顯示郵件列表 =====
+        function showEmailsList(sender) {
+            const section = document.getElementById('emailsListSection');
+            const title = document.getElementById('emailsListTitle');
+            const list = document.getElementById('emailsList');
+
+            title.textContent = `📧 ${sender.name} 的郵件列表 (${sender.totalEmails} 封)`;
+            section.style.display = 'block';
+
+            list.innerHTML = '';
+            sender.emails.forEach(email => {
+                const item = document.createElement('div');
+                const isUnread = email.flags && !email.flags.includes('\\Seen');
+                item.className = 'email-item' + (isUnread ? ' unread' : '');
+                if (selectedEmail && selectedEmail.id === email.id) {
+                    item.classList.add('selected');
+                }
+
+                const timeStr = formatTime(email.date);
+
+                item.innerHTML = `
+                    <div class="email-header">
+                        <div class="email-subject">${email.subject || '(無主旨)'}</div>
+                        <div class="email-time">${timeStr}</div>
+                    </div>
+                    <div class="email-preview">${(email.text || email.bodyPreview || '').substring(0, 100)}...</div>
+                `;
+
+                item.onclick = () => selectEmail(sender, email);
+                list.appendChild(item);
+            });
+
+            section.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        // ===== 選擇郵件 =====
+        async function selectEmail(sender, email) {
+            selectedEmail = email;
+            showEmailsList(sender);
+            await showEmailContent(sender, email);
+            renderSenders();
+        }
+
+        // ===== 顯示郵件內容 =====
+        async function showEmailContent(sender, email) {
+            const contentDiv = document.getElementById('aiDetailContent');
+
+            // 顯示郵件內容
+            let emailBody = email.html || email.text || email.bodyPreview || '(無內容)';
+            if (!email.html && email.text) {
+                emailBody = emailBody.replace(/\n/g, '<br>');
+            }
+
+            contentDiv.innerHTML = `
+                <div class="email-content">
+                    <div class="email-content-header">
+                        <div class="email-content-subject">${email.subject || '(無主旨)'}</div>
+                        <div class="email-content-meta">
+                            來自：${sender.name} &lt;${sender.email}&gt;<br>
+                            日期：${new Date(email.date).toLocaleString('zh-TW')}
+                        </div>
+                    </div>
+                    <div>${emailBody}</div>
+                    <div class="action-buttons">
+                        <button class="action-btn primary" onclick="replyEmail()">↩️ 回覆</button>
+                        <button class="action-btn" onclick="forwardEmail()">➡️ 轉發</button>
+                        <button class="action-btn" onclick="deleteEmail()">🗑️ 刪除</button>
+                        ${!email.aiAnalysis || !email.aiAnalysis.aiEnhanced ?
+                          '<button class="action-btn" onclick="analyzeEmail()" id="analyzeBtn">🤖 AI 分析</button>' : ''}
+                    </div>
+                </div>
+
+                <div class="ai-section" id="aiAnalysisSection">
+                    <h3>🤖 AI 自動分析</h3>
+                    <div id="aiAnalysisContent">
+                        ${email.aiAnalysis ? renderAIAnalysis(email.aiAnalysis) : '<div class="note-item">點擊「AI 分析」按鈕進行分析</div>'}
+                    </div>
+                </div>
+            `;
+        }
+
+        // ===== 渲染 AI 分析結果 =====
+        function renderAIAnalysis(analysis) {
+            let html = '';
+
+            // 基礎分析
+            html += `<div class="note-item">
+                <strong>優先級:</strong> ${analysis.priority || 'N/A'} |
+                <strong>情感:</strong> ${analysis.sentiment || 'N/A'} |
+                <strong>緊急度:</strong> ${analysis.urgencyLevel || analysis.urgency || 'N/A'}
+            </div>`;
+
+            // 商業價值
+            if (analysis.opportunityValue || analysis.estimatedValue) {
+                html += `<div class="note-item">
+                    <strong>💰 商業價值:</strong> ${analysis.opportunityValue || analysis.estimatedValue}
+                </div>`;
+            }
+
+            // 客戶意圖
+            if (analysis.customerIntent) {
+                html += `<div class="note-item">
+                    <strong>🎯 客戶意圖:</strong> ${analysis.customerIntent}
+                </div>`;
+            }
+
+            // AI 增強分析（如果有）
+            if (analysis.aiEnhanced) {
+                if (analysis.keyInsights && analysis.keyInsights.length > 0) {
+                    html += '<div class="note-item"><strong>🔍 深入洞察:</strong><ul style="margin: 8px 0 0 20px;">';
+                    analysis.keyInsights.forEach(insight => {
+                        html += `<li>${insight}</li>`;
+                    });
+                    html += '</ul></div>';
+                }
+
+                if (analysis.nextSteps && analysis.nextSteps.length > 0) {
+                    html += '<div class="note-item"><strong>📋 建議步驟:</strong><ul style="margin: 8px 0 0 20px;">';
+                    analysis.nextSteps.forEach(step => {
+                        html += `<li>${step}</li>`;
+                    });
+                    html += '</ul></div>';
+                }
+
+                if (analysis.suggestedResponse) {
+                    html += `<div class="note-item">
+                        <strong>💬 建議回覆:</strong><br>
+                        <div style="margin-top: 8px; padding: 8px; background: #f7fafc; border-radius: 4px;">
+                            ${analysis.suggestedResponse.replace(/\n/g, '<br>')}
+                        </div>
+                    </div>`;
+                }
+
+                // 顯示 API 成本
+                if (analysis.apiCost) {
+                    html += `<div class="ai-cost">💵 API 成本: $${analysis.apiCost.toFixed(6)}</div>`;
+                }
+            }
+
+            return html;
+        }
+
+        // ===== 分析郵件（手動觸發） =====
+        async function analyzeEmail() {
+            if (!selectedEmail) return;
+
+            const btn = document.getElementById('analyzeBtn');
+            if (btn) {
+                btn.disabled = true;
+                btn.textContent = '分析中...';
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/ai/analyze`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        emailContent: selectedEmail.text || selectedEmail.bodyPreview || '',
+                        subject: selectedEmail.subject,
+                        from: selectedSender.email
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    selectedEmail.aiAnalysis = data.analysis;
+                    document.getElementById('aiAnalysisContent').innerHTML = renderAIAnalysis(data.analysis);
+                    if (btn) btn.style.display = 'none';
+                }
+            } catch (error) {
+                console.error('❌ AI 分析失敗:', error);
+                alert('AI 分析失敗: ' + error.message);
+            } finally {
+                if (btn) btn.disabled = false;
+            }
+        }
+
+        // ===== 顯示寄件人 AI 分析 =====
+        function showSenderAI(sender) {
+            const contentDiv = document.getElementById('aiDetailContent');
+
+            // 統計分析
+            const highPriorityCount = sender.emails.filter(e =>
+                e.aiAnalysis && (e.aiAnalysis.priority === 'high' || e.aiAnalysis.urgency === 'urgent')
+            ).length;
+
+            contentDiv.innerHTML = `
+                <div class="ai-section">
+                    <h3>👤 ${sender.name}</h3>
+                    <div style="color: #718096; font-size: 14px; margin-bottom: 12px;">
+                        ${sender.email}<br>
+                        共 ${sender.totalEmails} 封郵件 | ${sender.unreadEmails} 封未讀
+                        ${highPriorityCount > 0 ? ` | <span style="color: #c53030;">${highPriorityCount} 封高優先</span>` : ''}
+                    </div>
+                    <div class="tags">
+                        <span class="tag ${sender.priority === 'urgent' ? 'tag-urgent' : sender.priority === 'high' ? 'tag-high' : 'tag-medium'}">
+                            ${sender.priority === 'urgent' ? '🔴 緊急' : sender.priority === 'high' ? '🟡 高優先' : '🟢 一般'}
+                        </span>
+                        ${sender.value ? `<span class="tag tag-value">${sender.value}</span>` : ''}
+                    </div>
+                </div>
+
+                <div class="ai-section">
+                    <h3>📊 郵件統計</h3>
+                    <div class="note-item">
+                        <strong>總數:</strong> ${sender.totalEmails} 封<br>
+                        <strong>未讀:</strong> ${sender.unreadEmails} 封<br>
+                        <strong>高優先:</strong> ${highPriorityCount} 封
+                    </div>
+                </div>
+
+                <div style="text-align: center; margin-top: 20px; color: #718096; font-size: 14px;">
+                    👈 點擊左側郵件查看內容和 AI 分析
+                </div>
+            `;
+        }
+
+        // ===== 關閉郵件列表 =====
+        function closeEmailsList() {
+            document.getElementById('emailsListSection').style.display = 'none';
+            selectedSender = null;
+            selectedEmail = null;
+            renderSenders();
+            document.getElementById('aiDetailContent').innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-state-icon">💡</div>
+                    <div>點擊寄件人卡片或郵件查看 AI 分析</div>
+                </div>
+            `;
+        }
+
+        // ===== 拖拽功能 =====
+        function drag(ev) {
+            ev.dataTransfer.setData("senderEmail", ev.target.dataset.senderEmail);
+            ev.target.classList.add('dragging');
+            ev.stopPropagation();
+        }
+
+        function allowDrop(ev) {
+            ev.preventDefault();
+        }
+
+        function dragEnter(ev) {
+            if (ev.target.classList.contains('status-zone')) {
+                ev.target.classList.add('drag-over');
+            }
+        }
+
+        function dragLeave(ev) {
+            if (ev.target.classList.contains('status-zone')) {
+                ev.target.classList.remove('drag-over');
+            }
+        }
+
+        function drop(ev, newStatus) {
+            ev.preventDefault();
+            const senderEmail = ev.dataTransfer.getData("senderEmail");
+            const sender = sendersMap.get(senderEmail);
+
+            if (sender && sender.status !== newStatus) {
+                sender.status = newStatus;
+                renderSenders();
+                showNotification(`${sender.name} 已移動到「${getStatusText(newStatus)}」`);
+            }
+
+            document.querySelectorAll('.status-zone').forEach(zone => {
+                zone.classList.remove('drag-over');
+            });
+            document.querySelectorAll('.sender-card').forEach(card => {
+                card.classList.remove('dragging');
+            });
+        }
+
+        function getStatusText(status) {
+            return status === 'pending' ? '待處理' : status === 'processing' ? '處理中' : '已完成';
+        }
+
+        // ===== 工具函數 =====
+        function formatTime(date) {
+            const emailDate = new Date(date);
+            const now = new Date();
+            const diff = now - emailDate;
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+
+            if (days === 0) return emailDate.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' });
+            if (days === 1) return '昨天';
+            if (days < 7) return `${days} 天前`;
+            return emailDate.toLocaleDateString('zh-TW', { month: 'short', day: 'numeric' });
+        }
+
+        function updateCounts() {
+            let pending = 0, processing = 0, completed = 0;
+
+            sendersMap.forEach(sender => {
+                if (sender.status === 'pending') pending++;
+                else if (sender.status === 'processing') processing++;
+                else if (sender.status === 'completed') completed++;
+            });
+
+            document.getElementById('pendingCount').textContent = pending;
+            document.getElementById('processingCount').textContent = processing;
+            document.getElementById('completedCount').textContent = completed;
+        }
+
+        // ===== 郵件操作 =====
+        function composeEmail() {
+            document.getElementById('emailTo').value = '';
+            document.getElementById('emailSubject').value = '';
+            document.getElementById('emailBody').value = '';
+            document.getElementById('aiSuggestionContainer').innerHTML = '';
+            document.getElementById('composeModal').classList.add('active');
+        }
+
+        function closeCompose() {
+            document.getElementById('composeModal').classList.remove('active');
+        }
+
+        async function sendEmail() {
+            const to = document.getElementById('emailTo').value;
+            const subject = document.getElementById('emailSubject').value;
+            const body = document.getElementById('emailBody').value;
+
+            if (!to || !subject) {
+                alert('請填寫收件人和主旨');
+                return;
+            }
+
+            const btn = document.getElementById('sendBtn');
+            btn.disabled = true;
+            btn.textContent = '發送中...';
+
+            try {
+                const response = await fetch(`${API_BASE}/email/send`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        to: to,
+                        subject: subject,
+                        text: body
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    alert('✅ 郵件已發送！');
+                    closeCompose();
+                    syncEmails();
+                } else {
+                    throw new Error(data.error || '發送失敗');
+                }
+            } catch (error) {
+                console.error('❌ 發送郵件失敗:', error);
+                alert('❌ 發送失敗: ' + error.message);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '發送';
+            }
+        }
+
+        async function replyEmail() {
+            if (!selectedEmail || !selectedSender) return;
+
+            document.getElementById('emailTo').value = selectedSender.email;
+            document.getElementById('emailSubject').value = 'Re: ' + (selectedEmail.subject || '');
+            document.getElementById('emailBody').value = `\n\n--- 原始郵件 ---\n${selectedEmail.text || selectedEmail.bodyPreview || ''}`;
+
+            // 獲取 AI 回覆建議
+            if (aiEnabled) {
+                await generateReplySuggestion();
+            }
+
+            document.getElementById('composeModal').classList.add('active');
+        }
+
+        async function generateReplySuggestion() {
+            const container = document.getElementById('aiSuggestionContainer');
+            container.innerHTML = '<div class="ai-suggestion"><div class="loading"></div> AI 正在生成回覆建議...</div>';
+
+            try {
+                const response = await fetch(`${API_BASE}/ai/generate-reply`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        emailContent: selectedEmail.text || selectedEmail.bodyPreview || '',
+                        context: {
+                            originalSubject: selectedEmail.subject,
+                            from: selectedSender.name
+                        }
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success && data.reply.content) {
+                    container.innerHTML = `
+                        <div class="ai-suggestion">
+                            <div class="ai-suggestion-header">🤖 AI 建議回覆 ${data.reply.apiCost ? `($${data.reply.apiCost.toFixed(6)})` : ''}</div>
+                            <div class="ai-suggestion-text">${data.reply.content.replace(/\n/g, '<br>')}</div>
+                            <button class="btn btn-secondary" style="margin-top: 8px; font-size: 12px;" onclick="useSuggestion()">
+                                使用此建議
+                            </button>
+                        </div>
+                    `;
+                    // 儲存建議供使用
+                    window.currentSuggestion = data.reply.content;
+                }
+            } catch (error) {
+                console.error('❌ 生成回覆建議失敗:', error);
+                container.innerHTML = '';
+            }
+        }
+
+        function useSuggestion() {
+            if (window.currentSuggestion) {
+                document.getElementById('emailBody').value = window.currentSuggestion;
+            }
+        }
+
+        function forwardEmail() {
+            if (!selectedEmail) return;
+
+            document.getElementById('emailTo').value = '';
+            document.getElementById('emailSubject').value = 'Fwd: ' + (selectedEmail.subject || '');
+            document.getElementById('emailBody').value = `\n\n--- 轉發郵件 ---\n${selectedEmail.text || selectedEmail.bodyPreview || ''}`;
+            document.getElementById('aiSuggestionContainer').innerHTML = '';
+            document.getElementById('composeModal').classList.add('active');
+        }
+
+        function deleteEmail() {
+            if (confirm('確定要刪除這封郵件嗎？')) {
+                alert('刪除功能開發中...');
+            }
+        }
+
+        async function syncEmails() {
+            await loadEmails();
+        }
+
+        function showNotification(message) {
+            console.log('📢', message);
+        }
+
+        // ===== 啟動應用 =====
+        init();
+
+        console.log('🚀 Outlook AI 2.0 真實版已載入！');
+        console.log('✨ 特色：');
+        console.log('1. 讀取真實郵件（IMAP/SMTP/Demo）');
+        console.log('2. 真實 OpenAI AI 分析');
+        console.log('3. AI 生成回覆建議');
+        console.log('4. 自動按寄件人分組');
+        console.log('5. 三狀態拖拽管理');
+    </script>
+</body>
+</html>

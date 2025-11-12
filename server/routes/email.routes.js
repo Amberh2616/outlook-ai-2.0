@@ -27,7 +27,8 @@ router.get('/list', async (req, res) => {
             limit: parseInt(req.query.limit) || 50,
             offset: parseInt(req.query.offset) || 0,
             unreadOnly: req.query.unreadOnly === 'true',
-            since: req.query.since || null
+            since: req.query.since || null,
+            includeAIAnalysis: req.query.includeAI === 'true' // 支援 AI 分析
         };
 
         const emails = await emailService.fetchEmails(options);
