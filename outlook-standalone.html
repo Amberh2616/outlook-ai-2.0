@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Outlook AI 2.0 - 獨立演示版</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --primary: #0078d4;
+            --primary-hover: #106ebe;
+            --bg: #f3f2f1;
+            --panel: #ffffff;
+            --border: #edebe9;
+            --text: #323130;
+            --text-secondary: #605e5c;
+            --text-tertiary: #8a8886;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Microsoft YaHei', Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* 頂部導覽 */
+        .top-nav {
+            height: 48px;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .nav-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .app-title {
+            font-size: 16px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .view-switcher {
+            display: flex;
+            gap: 5px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 4px;
+            padding: 3px;
+        }
+
+        .view-btn {
+            padding: 6px 16px;
+            border: none;
+            background: transparent;
+            color: white;
+            font-size: 13px;
+            cursor: pointer;
+            border-radius: 3px;
+            transition: 0.2s;
+        }
+
+        .view-btn:hover { background: rgba(255,255,255,0.15); }
+        .view-btn.active { background: white; color: var(--primary); }
+
+        .nav-right {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .search-input {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
+            width: 250px;
+            font-size: 13px;
+        }
+
+        .sync-btn {
+            padding: 6px 16px;
+            border: 1px solid rgba(255,255,255,0.3);
+            background: transparent;
+            color: white;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .sync-btn:hover { background: rgba(255,255,255,0.1); }
+
+        /* 主容器 */
+        .main {
+            height: calc(100vh - 48px);
+            display: flex;
+        }
+
+        /* 傳統視圖 */
+        .classic-view {
+            display: flex;
+            width: 100%;
+            height: 100%;
+        }
+
+        .classic-view.hidden { display: none; }
+
+        /* 資料夾側邊欄 */
+        .folders {
+            width: 200px;
+            background: var(--panel);
+            border-right: 1px solid var(--border);
+        }
+
+        .folder-header {
+            padding: 16px;
+            border-bottom: 1px solid var(--border);
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .folder-list { padding: 8px 0; }
+
+        .folder-item {
+            padding: 10px 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 13px;
+            transition: 0.2s;
+        }
+
+        .folder-item:hover { background: var(--bg); }
+        .folder-item.active {
+            background: var(--bg);
+            border-left: 3px solid var(--primary);
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        .folder-count {
+            margin-left: auto;
+            font-size: 11px;
+            background: var(--text-tertiary);
+            color: white;
+            padding: 2px 6px;
+            border-radius: 10px;
+        }
+
+        .folder-item.active .folder-count { background: var(--primary); }
+
+        /* 郵件列表 */
+        .email-list-panel {
+            width: 400px;
+            background: var(--panel);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .list-header {
+            padding: 16px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .list-title { font-weight: 600; font-size: 16px; }
+
+        .compose-btn {
+            padding: 6px 12px;
+            border: 1px solid var(--border);
+            background: var(--primary);
+            color: white;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .compose-btn:hover { background: var(--primary-hover); }
+
+        .email-list {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .email-item {
+            padding: 16px;
+            border-bottom: 1px solid var(--border);
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .email-item:hover { background: var(--bg); }
+        .email-item.selected {
+            background: #e6f2ff;
+            border-left: 3px solid var(--primary);
+        }
+
+        .email-item.unread { font-weight: 600; }
+
+        .email-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 4px;
+        }
+
+        .email-from {
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .email-date {
+            font-size: 11px;
+            color: var(--text-tertiary);
+        }
+
+        .email-subject {
+            font-size: 13px;
+            margin-bottom: 4px;
+        }
+
+        .email-preview {
+            font-size: 12px;
+            color: var(--text-secondary);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        /* 郵件內容 */
+        .content-panel {
+            flex: 1;
+            background: var(--panel);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .content-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .subject-display {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        .meta {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .toolbar {
+            padding: 12px 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            gap: 8px;
+        }
+
+        .toolbar-btn {
+            padding: 8px 16px;
+            border: 1px solid var(--border);
+            background: white;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .toolbar-btn:hover { background: var(--bg); }
+        .toolbar-btn.primary {
+            background: var(--primary);
+            color: white;
+            border: none;
+        }
+
+        .toolbar-btn.primary:hover { background: var(--primary-hover); }
+
+        .body-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .body {
+            line-height: 1.6;
+            font-size: 14px;
+            white-space: pre-wrap;
+        }
+
+        .no-selection {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: var(--text-tertiary);
+            gap: 12px;
+        }
+
+        .no-selection-icon { font-size: 64px; opacity: 0.3; }
+
+        /* AI 視圖 */
+        .ai-view {
+            display: none;
+            width: 100%;
+            height: 100%;
+        }
+
+        .ai-view.active { display: flex; }
+
+        .senders-panel {
+            width: 320px;
+            background: var(--panel);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .senders-header { padding: 16px; border-bottom: 1px solid var(--border); }
+
+        .senders-zones {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px;
+        }
+
+        .zone {
+            margin-bottom: 20px;
+        }
+
+        .zone-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-tertiary);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+
+        .sender-card {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .sender-card:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transform: translateY(-2px);
+        }
+
+        .sender-card.selected {
+            border-color: var(--primary);
+            background: #e6f2ff;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+
+        .avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+        }
+
+        .sender-info { flex: 1; }
+        .sender-name { font-weight: 600; font-size: 13px; }
+        .sender-email { font-size: 11px; color: var(--text-tertiary); }
+
+        .stats {
+            font-size: 11px;
+            color: var(--text-secondary);
+            display: flex;
+            gap: 12px;
+        }
+
+        .badge {
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 10px;
+            font-weight: 600;
+        }
+
+        .badge-high { background: #fff4e6; color: #fa8c16; }
+
+        /* 撰寫郵件 */
+        .compose-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+
+        .compose-modal.active { display: flex; }
+
+        .compose-window {
+            background: white;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 700px;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .compose-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+        }
+
+        .form-group {
+            padding: 12px 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            gap: 12px;
+        }
+
+        .form-label {
+            width: 80px;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .form-input {
+            flex: 1;
+            border: none;
+            font-size: 14px;
+            outline: none;
+        }
+
+        .form-textarea {
+            flex: 1;
+            border: none;
+            font-size: 14px;
+            padding: 20px;
+            resize: none;
+            outline: none;
+            min-height: 300px;
+        }
+
+        .compose-footer {
+            padding: 16px 20px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            gap: 12px;
+        }
+
+        .demo-notice {
+            position: fixed;
+            top: 60px;
+            right: 20px;
+            background: #fff7e6;
+            border: 1px solid #fa8c16;
+            border-radius: 8px;
+            padding: 12px 16px;
+            font-size: 13px;
+            color: #fa8c16;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-notice">
+        📌 獨立演示模式 - 不需要伺服器連接
+    </div>
+
+    <!-- 頂部導覽 -->
+    <div class="top-nav">
+        <div class="nav-left">
+            <div class="app-title">
+                <span>📧</span>
+                <span>Outlook AI 2.0</span>
+            </div>
+            <div class="view-switcher">
+                <button class="view-btn active" onclick="switchView('classic')">📋 傳統視圖</button>
+                <button class="view-btn" onclick="switchView('ai')">🤖 AI Pro</button>
+            </div>
+        </div>
+        <div class="nav-right">
+            <input type="text" class="search-input" placeholder="搜尋郵件..." id="searchInput">
+            <button class="sync-btn" onclick="loadEmails()">🔄 重新載入</button>
+        </div>
+    </div>
+
+    <!-- 主容器 -->
+    <div class="main">
+        <!-- 傳統視圖 -->
+        <div class="classic-view" id="classicView">
+            <div class="folders">
+                <div class="folder-header">資料夾</div>
+                <div class="folder-list">
+                    <div class="folder-item active" onclick="selectFolder('inbox')">
+                        <span>📥</span>
+                        <span>收件匣</span>
+                        <span class="folder-count" id="inboxCount">0</span>
+                    </div>
+                    <div class="folder-item" onclick="selectFolder('sent')">
+                        <span>📤</span>
+                        <span>已發送</span>
+                        <span class="folder-count">0</span>
+                    </div>
+                    <div class="folder-item" onclick="selectFolder('drafts')">
+                        <span>📝</span>
+                        <span>草稿</span>
+                        <span class="folder-count">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="email-list-panel">
+                <div class="list-header">
+                    <div class="list-title">收件匣</div>
+                    <button class="compose-btn" onclick="composeEmail()">✉️ 撰寫</button>
+                </div>
+                <div class="email-list" id="emailList"></div>
+            </div>
+
+            <div class="content-panel">
+                <div id="contentArea">
+                    <div class="no-selection">
+                        <div class="no-selection-icon">📧</div>
+                        <div>選擇一封郵件來查看內容</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- AI 視圖 -->
+        <div class="ai-view" id="aiView">
+            <div class="senders-panel">
+                <div class="senders-header">
+                    <div style="font-weight: 600;">寄件人分組</div>
+                </div>
+                <div class="senders-zones" id="sendersZones"></div>
+            </div>
+
+            <div class="content-panel">
+                <div id="aiContent">
+                    <div class="no-selection">
+                        <div class="no-selection-icon">👤</div>
+                        <div>選擇寄件人來查看郵件</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 撰寫郵件 -->
+    <div class="compose-modal" id="composeModal">
+        <div class="compose-window">
+            <div class="compose-header">
+                <div style="font-weight: 600;">撰寫郵件</div>
+                <button class="close-btn" onclick="closeCompose()">×</button>
+            </div>
+            <div class="form-group">
+                <label class="form-label">收件人：</label>
+                <input type="text" class="form-input" id="emailTo">
+            </div>
+            <div class="form-group">
+                <label class="form-label">副本：</label>
+                <input type="text" class="form-input" id="emailCc">
+            </div>
+            <div class="form-group">
+                <label class="form-label">主旨：</label>
+                <input type="text" class="form-input" id="emailSubject">
+            </div>
+            <textarea class="form-textarea" id="emailBody" placeholder="輸入郵件內容..."></textarea>
+            <div class="compose-footer">
+                <button class="compose-btn" onclick="sendEmail()">發送</button>
+                <button class="compose-btn" style="background: #ccc;" onclick="closeCompose()">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 演示郵件資料
+        const DEMO_EMAILS = [
+            {
+                id: '1',
+                from: { name: '王小明', address: 'wang@abc-tech.com' },
+                subject: '關於產品報價的討論',
+                date: new Date(Date.now() - 2 * 3600000),
+                text: '您好 Amber，\n\n我們是 ABC 科技公司的採購部門。最近在市場調查中注意到貴公司的產品線，特別是新推出的智能設備系列，我們非常感興趣。\n\n能否請您提供以下資訊：\n- 產品型號 X100 的詳細規格和報價\n- 大量採購的折扣方案\n- 交貨期和售後服務條款\n\n我們預計採購數量在 500-1000 件之間，預算範圍在 $50,000-$100,000。希望能在本月底前做出採購決定。\n\n期待您的回覆。',
+                unread: true
+            },
+            {
+                id: '2',
+                from: { name: '李美玲', address: 'li@xyz-trade.com' },
+                subject: '物流配送時間確認',
+                date: new Date(Date.now() - 24 * 3600000),
+                text: '您好，\n\n請確認本批貨物的配送時間，我們這邊需要提前安排倉儲空間。\n\n訂單編號：#XYZ-2024-001\n數量：300 件\n\n這批貨物今日截止確認，麻煩儘快回覆。',
+                unread: true
+            },
+            {
+                id: '3',
+                from: { name: '陳雅婷', address: 'chen@ghi-group.com' },
+                subject: '新產品合作機會',
+                date: new Date(Date.now() - 3 * 3600000),
+                text: '您好 Amber，\n\n我們是 GHI 集團的採購經理。看到貴公司最近推出的新產品線，我們認為有很好的合作機會。\n\nGHI 集團是業內領先的經銷商，每年採購額超過 $10M。我們想了解：\n- 是否有經銷商合作方案\n- 長期合作的價格優惠\n- 獨家代理的可能性\n\n希望能安排一次會議詳細討論。',
+                unread: false
+            },
+            {
+                id: '4',
+                from: { name: '張建國', address: 'zhang@def-corp.com' },
+                subject: '產品技術規格諮詢',
+                date: new Date(Date.now() - 5 * 3600000),
+                text: '您好，\n\n我們正在評估貴公司的產品是否符合我們的技術需求。\n\n請問 X100 系列是否支持以下規格：\n- 工作溫度範圍 -20°C 至 60°C\n- IP67 防水防塵等級\n- CE 和 FCC 認證\n\n這些是我們採購的基本要求。',
+                unread: false
+            },
+            {
+                id: '5',
+                from: { name: '劉經理', address: 'liu@jkl-trading.com' },
+                subject: 'Re: 上月訂單進度',
+                date: new Date(Date.now() - 12 * 3600000),
+                text: '您好，\n\n上個月的訂單（訂單號 #2024-1015）目前進度如何？客戶那邊一直在催。\n\n請回覆預計交貨時間，謝謝！',
+                unread: false
+            }
+        ];
+
+        let emails = [...DEMO_EMAILS];
+        let currentView = 'classic';
+        let selectedEmailId = null;
+
+        function init() {
+            loadEmails();
+        }
+
+        function switchView(view) {
+            currentView = view;
+            document.querySelectorAll('.view-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+
+            if (view === 'classic') {
+                document.getElementById('classicView').classList.remove('hidden');
+                document.getElementById('aiView').classList.remove('active');
+            } else {
+                document.getElementById('classicView').classList.add('hidden');
+                document.getElementById('aiView').classList.add('active');
+                renderSenders();
+            }
+        }
+
+        function loadEmails() {
+            emails = [...DEMO_EMAILS];
+            renderEmailList();
+            document.getElementById('inboxCount').textContent = emails.length;
+        }
+
+        function renderEmailList() {
+            const list = document.getElementById('emailList');
+            list.innerHTML = '';
+
+            emails.forEach(email => {
+                const item = document.createElement('div');
+                item.className = 'email-item';
+                if (email.unread) item.classList.add('unread');
+                if (email.id === selectedEmailId) item.classList.add('selected');
+
+                const date = email.date.toLocaleString('zh-TW', {
+                    month: 'numeric',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+
+                item.innerHTML = `
+                    <div class="email-header">
+                        <div class="email-from">${email.from.name}</div>
+                        <div class="email-date">${date}</div>
+                    </div>
+                    <div class="email-subject">${email.subject}</div>
+                    <div class="email-preview">${email.text.substring(0, 80)}...</div>
+                `;
+
+                item.onclick = () => selectEmail(email);
+                list.appendChild(item);
+            });
+        }
+
+        function selectEmail(email) {
+            selectedEmailId = email.id;
+            renderEmailList();
+
+            const content = document.getElementById('contentArea');
+            const date = email.date.toLocaleString('zh-TW');
+
+            content.innerHTML = `
+                <div class="content-header">
+                    <div class="subject-display">${email.subject}</div>
+                    <div class="meta">
+                        <strong>寄件人：</strong>${email.from.name} &lt;${email.from.address}&gt; |
+                        <strong>日期：</strong>${date}
+                    </div>
+                </div>
+                <div class="toolbar">
+                    <button class="toolbar-btn primary" onclick="replyEmail()">↩️ 回覆</button>
+                    <button class="toolbar-btn" onclick="forwardEmail()">➡️ 轉發</button>
+                    <button class="toolbar-btn" onclick="deleteEmail()">🗑️ 刪除</button>
+                </div>
+                <div class="body-container">
+                    <div class="body">${email.text}</div>
+                </div>
+            `;
+        }
+
+        function renderSenders() {
+            const zones = document.getElementById('sendersZones');
+            const senderMap = new Map();
+
+            emails.forEach(email => {
+                const addr = email.from.address;
+                if (!senderMap.has(addr)) {
+                    senderMap.set(addr, {
+                        name: email.from.name,
+                        address: addr,
+                        emails: [],
+                        unread: 0
+                    });
+                }
+                senderMap.get(addr).emails.push(email);
+                if (email.unread) senderMap.get(addr).unread++;
+            });
+
+            zones.innerHTML = `
+                <div class="zone">
+                    <div class="zone-title">📥 待處理</div>
+                    ${Array.from(senderMap.values()).map(sender => `
+                        <div class="sender-card">
+                            <div class="card-header">
+                                <div class="avatar">${sender.name.charAt(0)}</div>
+                                <div class="sender-info">
+                                    <div class="sender-name">${sender.name}</div>
+                                    <div class="sender-email">${sender.address}</div>
+                                </div>
+                            </div>
+                            <div class="stats">
+                                <span>📧 ${sender.emails.length} 封</span>
+                                ${sender.unread > 0 ? `<span>✉️ ${sender.unread} 未讀</span>` : ''}
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        function selectFolder(folder) {
+            document.querySelectorAll('.folder-item').forEach(item => item.classList.remove('active'));
+            event.target.closest('.folder-item').classList.add('active');
+        }
+
+        function composeEmail() {
+            document.getElementById('emailTo').value = '';
+            document.getElementById('emailCc').value = '';
+            document.getElementById('emailSubject').value = '';
+            document.getElementById('emailBody').value = '';
+            document.getElementById('composeModal').classList.add('active');
+        }
+
+        function closeCompose() {
+            document.getElementById('composeModal').classList.remove('active');
+        }
+
+        function sendEmail() {
+            alert('📧 演示模式：郵件已「發送」（實際未發送）');
+            closeCompose();
+        }
+
+        function replyEmail() {
+            const email = emails.find(e => e.id === selectedEmailId);
+            if (!email) return;
+
+            document.getElementById('emailTo').value = email.from.address;
+            document.getElementById('emailSubject').value = 'Re: ' + email.subject;
+            document.getElementById('emailBody').value = `\n\n--- 原始郵件 ---\n${email.text}`;
+            composeEmail();
+        }
+
+        function forwardEmail() {
+            const email = emails.find(e => e.id === selectedEmailId);
+            if (!email) return;
+
+            document.getElementById('emailTo').value = '';
+            document.getElementById('emailSubject').value = 'Fwd: ' + email.subject;
+            document.getElementById('emailBody').value = `\n\n--- 轉發郵件 ---\n${email.text}`;
+            composeEmail();
+        }
+
+        function deleteEmail() {
+            if (confirm('確定要刪除這封郵件嗎？')) {
+                alert('🗑️ 演示模式：郵件已「刪除」（實際未刪除）');
+            }
+        }
+
+        init();
+        console.log('📧 Outlook AI 2.0 獨立演示版已載入');
+        console.log('✨ 此版本不需要伺服器連接，可直接在瀏覽器開啟');
+    </script>
+</body>
+</html>
