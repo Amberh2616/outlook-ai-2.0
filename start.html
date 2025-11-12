@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Outlook AI 2.0 - 啟動頁面</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 900px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+            text-align: center;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+            text-align: center;
+        }
+
+        .status-box {
+            background: #f0f0f0;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+
+        .status-icon {
+            font-size: 28px;
+            margin-right: 15px;
+            min-width: 40px;
+        }
+
+        .status-text {
+            flex: 1;
+        }
+
+        .status-label {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .status-value {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .button-group {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .btn {
+            padding: 20px;
+            border: none;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #48bb78;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #38a169;
+            transform: translateY(-3px);
+        }
+
+        .btn-info {
+            background: #4299e1;
+            color: white;
+        }
+
+        .btn-info:hover {
+            background: #3182ce;
+            transform: translateY(-3px);
+        }
+
+        .info-panel {
+            background: #e6f7ff;
+            border-left: 4px solid #1890ff;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+
+        .info-title {
+            font-weight: 600;
+            color: #1890ff;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+
+        .info-content {
+            color: #333;
+            line-height: 1.8;
+        }
+
+        .test-results {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+        }
+
+        .success {
+            color: #48bb78;
+            font-weight: 600;
+        }
+
+        .error {
+            color: #e53e3e;
+            font-weight: 600;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .feature-list {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin: 15px 0;
+        }
+
+        .feature-item {
+            padding: 10px;
+            background: white;
+            border-radius: 6px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📧 Outlook AI 2.0</h1>
+        <p class="subtitle">雙視圖智能郵件系統 - 啟動頁面</p>
+
+        <div class="status-box">
+            <h3 style="margin-bottom: 15px;">🔍 系統狀態檢測</h3>
+            <div class="status-item">
+                <span class="status-icon">🖥️</span>
+                <div class="status-text">
+                    <div class="status-label">伺服器狀態</div>
+                    <div class="status-value" id="serverStatus">檢測中...</div>
+                </div>
+            </div>
+            <div class="status-item">
+                <span class="status-icon">📬</span>
+                <div class="status-text">
+                    <div class="status-label">郵件服務</div>
+                    <div class="status-value" id="emailStatus">檢測中...</div>
+                </div>
+            </div>
+            <div class="status-item">
+                <span class="status-icon">🤖</span>
+                <div class="status-text">
+                    <div class="status-label">AI 服務</div>
+                    <div class="status-value" id="aiStatus">檢測中...</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="info-panel">
+            <div class="info-title">✨ 雙視圖功能</div>
+            <div class="feature-list">
+                <div class="feature-item">📋 傳統 Outlook 視圖</div>
+                <div class="feature-item">🤖 AI Pro 智能視圖</div>
+                <div class="feature-item">✉️ 發送/回覆郵件</div>
+                <div class="feature-item">🗑️ 刪除郵件</div>
+                <div class="feature-item">👁️ 標記已讀/未讀</div>
+                <div class="feature-item">🔍 搜尋郵件</div>
+                <div class="feature-item">📁 資料夾管理</div>
+                <div class="feature-item">💡 AI 智能分析</div>
+            </div>
+        </div>
+
+        <div class="button-group">
+            <a href="http://localhost:3000/outlook-ai-dual.html" class="btn btn-primary" target="_blank">
+                <span>🚀</span>
+                <span>開啟 Outlook AI 2.0（雙視圖完整版）</span>
+            </a>
+            <a href="http://localhost:3000/outlook-ai-real.html" class="btn btn-secondary" target="_blank">
+                <span>📧</span>
+                <span>開啟舊版（AI Pro 單視圖）</span>
+            </a>
+            <button class="btn btn-info" onclick="runTests()">
+                <span>🔄</span>
+                <span>重新檢測系統</span>
+            </button>
+        </div>
+
+        <div id="testResults" class="test-results" style="display: none;">
+            <div style="font-weight: 600; margin-bottom: 10px;">詳細測試結果：</div>
+            <div id="testOutput"></div>
+        </div>
+
+        <div class="info-panel" style="margin-top: 30px; background: #fff7e6; border-color: #fa8c16;">
+            <div class="info-title" style="color: #fa8c16;">💡 使用提示</div>
+            <div class="info-content">
+                <strong>如果頁面無法正確顯示：</strong><br>
+                1. 按 <strong>Ctrl + Shift + R</strong>（Windows）或 <strong>Cmd + Shift + R</strong>（Mac）強制刷新<br>
+                2. 清除瀏覽器緩存後重新開啟<br>
+                3. 嘗試使用無痕模式開啟<br>
+                4. 確認 JavaScript 已啟用
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:3000/api';
+
+        async function runTests() {
+            document.getElementById('testResults').style.display = 'block';
+            const output = document.getElementById('testOutput');
+            output.innerHTML = '<div class="loading"></div> 正在檢測...';
+
+            let results = [];
+
+            // 測試伺服器健康
+            try {
+                const healthRes = await fetch(`${API_BASE}/health`);
+                const healthData = await healthRes.json();
+
+                if (healthData.status === 'ok') {
+                    document.getElementById('serverStatus').innerHTML = '<span class="success">✅ 運行正常</span>';
+                    results.push('✅ 伺服器健康檢查：通過');
+                    results.push(`   - 服務：${healthData.service}`);
+                    results.push(`   - 版本：${healthData.version}`);
+                } else {
+                    throw new Error('服務狀態異常');
+                }
+            } catch (error) {
+                document.getElementById('serverStatus').innerHTML = '<span class="error">❌ 連接失敗</span>';
+                results.push('❌ 伺服器健康檢查：失敗');
+                results.push(`   錯誤：${error.message}`);
+            }
+
+            // 測試郵件服務
+            try {
+                const emailRes = await fetch(`${API_BASE}/email/list?limit=5`);
+                const emailData = await emailRes.json();
+
+                if (emailData.success) {
+                    document.getElementById('emailStatus').innerHTML = `<span class="success">✅ 正常運行（${emailData.count} 封郵件）</span>`;
+                    results.push('✅ 郵件服務：正常');
+                    results.push(`   - 載入郵件數：${emailData.count}`);
+                } else {
+                    throw new Error(emailData.error || '未知錯誤');
+                }
+            } catch (error) {
+                document.getElementById('emailStatus').innerHTML = '<span class="error">❌ 服務異常</span>';
+                results.push('❌ 郵件服務：異常');
+                results.push(`   錯誤：${error.message}`);
+            }
+
+            // 測試 AI 服務
+            try {
+                const aiRes = await fetch(`${API_BASE}/ai/status`);
+                const aiData = await aiRes.json();
+
+                if (aiData.success) {
+                    if (aiData.status.enabled) {
+                        document.getElementById('aiStatus').innerHTML = '<span class="success">✅ AI 已啟用</span>';
+                        results.push('✅ AI 服務：已啟用');
+                    } else {
+                        document.getElementById('aiStatus').innerHTML = '<span style="color: #ff8c00;">⚠️ 基本模式</span>';
+                        results.push('⚠️ AI 服務：基本模式（未設定 OpenAI API Key）');
+                    }
+                    results.push(`   - 模型：${aiData.status.model || 'N/A'}`);
+                } else {
+                    throw new Error('AI 狀態檢查失敗');
+                }
+            } catch (error) {
+                document.getElementById('aiStatus').innerHTML = '<span class="error">❌ 無法檢測</span>';
+                results.push('❌ AI 服務：無法檢測');
+                results.push(`   錯誤：${error.message}`);
+            }
+
+            // 顯示結果
+            output.innerHTML = results.map(line => {
+                if (line.startsWith('✅')) {
+                    return `<div style="color: #48bb78;">${line}</div>`;
+                } else if (line.startsWith('❌')) {
+                    return `<div style="color: #e53e3e;">${line}</div>`;
+                } else if (line.startsWith('⚠️')) {
+                    return `<div style="color: #ff8c00;">${line}</div>`;
+                } else {
+                    return `<div style="color: #666; padding-left: 10px;">${line}</div>`;
+                }
+            }).join('');
+        }
+
+        // 頁面載入時自動檢測
+        window.addEventListener('load', runTests);
+    </script>
+</body>
+</html>
