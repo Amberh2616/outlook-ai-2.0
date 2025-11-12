@@ -679,6 +679,144 @@ class EmailService {
             throw error;
         }
     }
+
+    // 刪除郵件（移動到垃圾桶）
+    async deleteEmail(emailId, folder = 'INBOX') {
+        // 演示模式
+        if (this.demoMode) {
+            console.log('📧 演示模式：模擬刪除郵件', emailId);
+            return { success: true };
+        }
+
+        return new Promise((resolve, reject) => {
+            const imap = new Imap(this.imapConfig);
+
+            imap.once('ready', () => {
+                imap.openBox(folder, false, (err, box) => {
+                    if (err) {
+                        reject(err);
+                        return;
+                    }
+
+                    // 標記為已刪除
+                    imap.addFlags(emailId, ['\\Deleted'], (err) => {
+                        if (err) {
+                            reject(err);
+                        } else {
+                            // 執行刪除
+                            imap.expunge((err) => {
+                                if (err) {
+                                    reject(err);
+                                } else {
+                                    resolve({ success: true });
+                                }
+                                imap.end();
+                            });
+                        }
+                    });
+                });
+            });
+
+            imap.once('error', (err) => {
+                reject(err);
+            });
+
+            imap.connect();
+        });
+    }
+
+    // 移動郵件到其他資料夾
+    async moveEmail(emailId, fromFolder = 'INBOX', toFolder) {
+        // 演示模式
+        if (this.demoMode) {
+            console.log('📧 演示模式：模擬移動郵件', emailId, 'from', fromFolder, 'to', toFolder);
+            return { success: true };
+        }
+
+        return new Promise((resolve, reject) => {
+            const imap = new Imap(this.imapConfig);
+
+            imap.once('ready', () => {
+                imap.openBox(fromFolder, false, (err, box) => {
+                    if (err) {
+                        reject(err);
+                        return;
+                    }
+
+                    imap.move(emailId, toFolder, (err) => {
+                        if (err) {
+                            reject(err);
+                        } else {
+                            resolve({ success: true });
+                        }
+                        imap.end();
+                    });
+                });
+            });
+
+            imap.once('error', (err) => {
+                reject(err);
+            });
+
+            imap.connect();
+        });
+    }
+
+    // 獲取所有郵件資料夾
+    async listFolders() {
+        // 演示模式：返回標準資料夾
+        if (this.demoMode) {
+            return [
+                { name: 'INBOX', displayName: '收件匣', count: 10 },
+                { name: 'Sent', displayName: '已發送', count: 5 },
+                { name: 'Drafts', displayName: '草稿', count: 2 },
+                { name: 'Trash', displayName: '垃圾郵件', count: 0 },
+                { name: 'Spam', displayName: '垃圾信箱', count: 0 }
+            ];
+        }
+
+        return new Promise((resolve, reject) => {
+            const imap = new Imap(this.imapConfig);
+
+            imap.once('ready', () => {
+                imap.getBoxes((err, boxes) => {
+                    if (err) {
+                        reject(err);
+                        imap.end();
+                        return;
+                    }
+
+                    const folders = this.parseBoxes(boxes);
+                    imap.end();
+                    resolve(folders);
+                });
+            });
+
+            imap.once('error', (err) => {
+                reject(err);
+            });
+
+            imap.connect();
+        });
+    }
+
+    // 解析資料夾結構
+    parseBoxes(boxes, prefix = '') {
+        const folders = [];
+
+        for (const [name, box] of Object.entries(boxes)) {
+            const fullName = prefix ? `${prefix}${box.delimiter}${name}` : name;
+
+            folders.push({
+                name: fullName,
+                displayName: name,
+                delimiter: box.delimiter,
+                children: box.children ? this.parseBoxes(box.children, fullName) : []
+            });
+        }
+
+        return folders;
+    }
 }
 
 module.exports = new EmailService();

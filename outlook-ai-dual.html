@@ -1,0 +1,1623 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Outlook AI 2.0 - 雙視圖郵件系統</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-color: #0078d4;
+            --primary-hover: #106ebe;
+            --secondary-color: #50e3c2;
+            --danger-color: #e81123;
+            --warning-color: #ff8c00;
+            --success-color: #107c10;
+            --bg-color: #f3f2f1;
+            --panel-bg: #ffffff;
+            --border-color: #edebe9;
+            --text-primary: #323130;
+            --text-secondary: #605e5c;
+            --text-tertiary: #8a8886;
+            --shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            --shadow-hover: 0 4px 16px rgba(0, 0, 0, 0.15);
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Microsoft YaHei', Arial, sans-serif;
+            background: var(--bg-color);
+            color: var(--text-primary);
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        /* ========== 頂部導覽欄 ========== */
+        .top-nav {
+            height: 48px;
+            background: var(--primary-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            box-shadow: var(--shadow);
+            z-index: 1000;
+        }
+
+        .top-nav-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .app-title {
+            font-size: 16px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .view-switcher {
+            display: flex;
+            gap: 5px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            padding: 3px;
+        }
+
+        .view-btn {
+            padding: 6px 16px;
+            border: none;
+            background: transparent;
+            color: white;
+            font-size: 13px;
+            cursor: pointer;
+            border-radius: 3px;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+
+        .view-btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .view-btn.active {
+            background: white;
+            color: var(--primary-color);
+        }
+
+        .top-nav-right {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .search-box {
+            position: relative;
+        }
+
+        .search-input {
+            padding: 6px 12px 6px 32px;
+            border: none;
+            border-radius: 4px;
+            width: 300px;
+            font-size: 13px;
+            background: rgba(255, 255, 255, 0.9);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-tertiary);
+        }
+
+        .sync-btn {
+            padding: 6px 16px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            background: transparent;
+            color: white;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.2s;
+        }
+
+        .sync-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            padding: 4px 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #4caf50;
+        }
+
+        /* ========== 主容器 ========== */
+        .main-container {
+            height: calc(100vh - 48px);
+            display: flex;
+            position: relative;
+        }
+
+        /* ========== 傳統視圖 ========== */
+        .classic-view {
+            display: flex;
+            width: 100%;
+            height: 100%;
+        }
+
+        .classic-view.hidden {
+            display: none;
+        }
+
+        /* 左側資料夾列表 */
+        .folder-sidebar {
+            width: 200px;
+            background: var(--panel-bg);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .folder-header {
+            padding: 16px;
+            border-bottom: 1px solid var(--border-color);
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .folder-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px 0;
+        }
+
+        .folder-item {
+            padding: 10px 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 13px;
+            transition: all 0.2s;
+            user-select: none;
+        }
+
+        .folder-item:hover {
+            background: var(--bg-color);
+        }
+
+        .folder-item.active {
+            background: var(--bg-color);
+            border-left: 3px solid var(--primary-color);
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+
+        .folder-icon {
+            font-size: 16px;
+        }
+
+        .folder-count {
+            margin-left: auto;
+            font-size: 11px;
+            background: var(--text-tertiary);
+            color: white;
+            padding: 2px 6px;
+            border-radius: 10px;
+            min-width: 20px;
+            text-align: center;
+        }
+
+        .folder-item.active .folder-count {
+            background: var(--primary-color);
+        }
+
+        /* 中間郵件列表 */
+        .email-list-panel {
+            width: 400px;
+            background: var(--panel-bg);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .email-list-header {
+            padding: 16px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .email-list-title {
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .email-list-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .action-btn {
+            padding: 6px 12px;
+            border: 1px solid var(--border-color);
+            background: white;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+
+        .action-btn:hover {
+            background: var(--bg-color);
+        }
+
+        .email-list {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .email-item {
+            padding: 16px;
+            border-bottom: 1px solid var(--border-color);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .email-item:hover {
+            background: var(--bg-color);
+        }
+
+        .email-item.selected {
+            background: #e6f2ff;
+            border-left: 3px solid var(--primary-color);
+        }
+
+        .email-item.unread {
+            background: #f9f9f9;
+            font-weight: 600;
+        }
+
+        .email-item.unread::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 4px;
+            height: 4px;
+            background: var(--primary-color);
+            border-radius: 50%;
+        }
+
+        .email-item-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 4px;
+        }
+
+        .email-from {
+            font-size: 14px;
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        .email-date {
+            font-size: 11px;
+            color: var(--text-tertiary);
+        }
+
+        .email-subject {
+            font-size: 13px;
+            margin-bottom: 4px;
+            color: var(--text-primary);
+        }
+
+        .email-preview {
+            font-size: 12px;
+            color: var(--text-secondary);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .email-item.unread .email-subject {
+            font-weight: 600;
+        }
+
+        /* 右側郵件內容 */
+        .email-content-panel {
+            flex: 1;
+            background: var(--panel-bg);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .email-content-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .email-subject-display {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        .email-meta {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .email-actions-toolbar {
+            padding: 12px 20px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            gap: 8px;
+        }
+
+        .toolbar-btn {
+            padding: 8px 16px;
+            border: 1px solid var(--border-color);
+            background: white;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+
+        .toolbar-btn:hover {
+            background: var(--bg-color);
+        }
+
+        .toolbar-btn.primary {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+        }
+
+        .toolbar-btn.primary:hover {
+            background: var(--primary-hover);
+        }
+
+        .toolbar-btn.danger {
+            color: var(--danger-color);
+        }
+
+        .toolbar-btn.danger:hover {
+            background: #fee;
+        }
+
+        .email-body-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .email-body {
+            line-height: 1.6;
+            font-size: 14px;
+            white-space: pre-wrap;
+        }
+
+        .no-email-selected {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: var(--text-tertiary);
+            gap: 12px;
+        }
+
+        .no-email-icon {
+            font-size: 64px;
+            opacity: 0.3;
+        }
+
+        /* ========== AI Pro 視圖 ========== */
+        .ai-view {
+            display: none;
+            width: 100%;
+            height: 100%;
+        }
+
+        .ai-view.active {
+            display: flex;
+        }
+
+        .senders-panel {
+            width: 320px;
+            background: var(--panel-bg);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .senders-header {
+            padding: 16px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .senders-filter {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .filter-btn {
+            flex: 1;
+            padding: 6px;
+            border: 1px solid var(--border-color);
+            background: white;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 11px;
+            transition: all 0.2s;
+        }
+
+        .filter-btn:hover {
+            background: var(--bg-color);
+        }
+
+        .filter-btn.active {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        .senders-zones {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px;
+        }
+
+        .sender-zone {
+            margin-bottom: 20px;
+        }
+
+        .zone-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-tertiary);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .sender-card {
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            user-select: none;
+        }
+
+        .sender-card:hover {
+            box-shadow: var(--shadow-hover);
+            transform: translateY(-2px);
+        }
+
+        .sender-card.selected {
+            border-color: var(--primary-color);
+            background: #e6f2ff;
+        }
+
+        .sender-card-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+
+        .sender-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .sender-info {
+            flex: 1;
+        }
+
+        .sender-name {
+            font-weight: 600;
+            font-size: 13px;
+            margin-bottom: 2px;
+        }
+
+        .sender-email {
+            font-size: 11px;
+            color: var(--text-tertiary);
+        }
+
+        .sender-stats {
+            display: flex;
+            gap: 12px;
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        .sender-badge {
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 10px;
+            font-weight: 600;
+        }
+
+        .badge-high {
+            background: #fff4e6;
+            color: #ff8c00;
+        }
+
+        .badge-urgent {
+            background: #fee;
+            color: #e81123;
+        }
+
+        .ai-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .ai-panel-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .ai-toggle {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .toggle-switch {
+            width: 40px;
+            height: 20px;
+            background: #ccc;
+            border-radius: 10px;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .toggle-switch.active {
+            background: var(--success-color);
+        }
+
+        .toggle-slider {
+            width: 16px;
+            height: 16px;
+            background: white;
+            border-radius: 50%;
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            transition: all 0.3s;
+        }
+
+        .toggle-switch.active .toggle-slider {
+            left: 22px;
+        }
+
+        .ai-content {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+        }
+
+        .sender-emails-list {
+            width: 320px;
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sender-emails-header {
+            padding: 16px;
+            border-bottom: 1px solid var(--border-color);
+            font-weight: 600;
+        }
+
+        .sender-email-item {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border-color);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .sender-email-item:hover {
+            background: var(--bg-color);
+        }
+
+        .sender-email-item.selected {
+            background: #e6f2ff;
+        }
+
+        .email-detail-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .ai-analysis-panel {
+            padding: 20px;
+            background: #f9f9f9;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .ai-section {
+            margin-bottom: 16px;
+        }
+
+        .ai-section-title {
+            font-weight: 600;
+            font-size: 13px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .ai-section-content {
+            font-size: 13px;
+            line-height: 1.6;
+            color: var(--text-secondary);
+        }
+
+        .todo-list {
+            list-style: none;
+        }
+
+        .todo-item {
+            padding: 6px 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .todo-checkbox {
+            width: 16px;
+            height: 16px;
+            border: 2px solid var(--border-color);
+            border-radius: 3px;
+            cursor: pointer;
+        }
+
+        /* ========== 撰寫郵件彈窗 ========== */
+        .compose-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+
+        .compose-modal.active {
+            display: flex;
+        }
+
+        .compose-window {
+            background: white;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 800px;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .compose-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .compose-title {
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            color: var(--text-secondary);
+            padding: 4px 8px;
+        }
+
+        .close-btn:hover {
+            color: var(--text-primary);
+        }
+
+        .compose-form {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .form-group {
+            padding: 12px 20px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .form-label {
+            width: 60px;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .form-input {
+            flex: 1;
+            border: none;
+            font-size: 14px;
+            outline: none;
+            font-family: inherit;
+        }
+
+        .form-textarea {
+            flex: 1;
+            border: none;
+            font-size: 14px;
+            padding: 20px;
+            resize: none;
+            outline: none;
+            font-family: inherit;
+            line-height: 1.6;
+        }
+
+        .compose-footer {
+            padding: 16px 20px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            gap: 12px;
+        }
+
+        .compose-btn {
+            padding: 8px 24px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .compose-btn-primary {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .compose-btn-primary:hover {
+            background: var(--primary-hover);
+        }
+
+        .compose-btn-secondary {
+            background: var(--bg-color);
+            color: var(--text-primary);
+        }
+
+        .compose-btn-secondary:hover {
+            background: var(--border-color);
+        }
+
+        .ai-suggestion {
+            margin: 12px 20px;
+            padding: 12px;
+            background: #e6f7ff;
+            border-left: 3px solid var(--primary-color);
+            border-radius: 4px;
+        }
+
+        .ai-suggestion-header {
+            font-weight: 600;
+            font-size: 12px;
+            color: var(--primary-color);
+            margin-bottom: 8px;
+        }
+
+        .ai-suggestion-text {
+            font-size: 13px;
+            line-height: 1.6;
+            color: var(--text-secondary);
+        }
+
+        /* ========== 滾動條樣式 ========== */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-color);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--text-tertiary);
+        }
+
+        /* ========== 載入動畫 ========== */
+        .loading {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid var(--border-color);
+            border-top-color: var(--primary-color);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <!-- 頂部導覽欄 -->
+    <div class="top-nav">
+        <div class="top-nav-left">
+            <div class="app-title">
+                <span>📧</span>
+                <span>Outlook AI 2.0</span>
+            </div>
+            <div class="view-switcher">
+                <button class="view-btn active" onclick="switchView('classic')">📋 傳統視圖</button>
+                <button class="view-btn" onclick="switchView('ai')">🤖 AI Pro 視圖</button>
+            </div>
+        </div>
+        <div class="top-nav-right">
+            <div class="search-box">
+                <span class="search-icon">🔍</span>
+                <input type="text" class="search-input" placeholder="搜尋郵件..." id="searchInput" onkeyup="searchEmails(event)">
+            </div>
+            <button class="sync-btn" onclick="syncEmails()" id="syncBtn">
+                <span>🔄</span>
+                <span>同步</span>
+            </button>
+            <div class="status-indicator">
+                <div class="status-dot" id="statusDot"></div>
+                <span id="statusText">已連線</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 主容器 -->
+    <div class="main-container">
+        <!-- ========== 傳統視圖 ========== -->
+        <div class="classic-view" id="classicView">
+            <!-- 左側資料夾列表 -->
+            <div class="folder-sidebar">
+                <div class="folder-header">資料夾</div>
+                <div class="folder-list" id="folderList">
+                    <div class="folder-item active" onclick="selectFolder('INBOX')">
+                        <span class="folder-icon">📥</span>
+                        <span>收件匣</span>
+                        <span class="folder-count" id="inboxCount">0</span>
+                    </div>
+                    <div class="folder-item" onclick="selectFolder('Sent')">
+                        <span class="folder-icon">📤</span>
+                        <span>已發送</span>
+                        <span class="folder-count">0</span>
+                    </div>
+                    <div class="folder-item" onclick="selectFolder('Drafts')">
+                        <span class="folder-icon">📝</span>
+                        <span>草稿</span>
+                        <span class="folder-count">0</span>
+                    </div>
+                    <div class="folder-item" onclick="selectFolder('Trash')">
+                        <span class="folder-icon">🗑️</span>
+                        <span>已刪除</span>
+                        <span class="folder-count">0</span>
+                    </div>
+                    <div class="folder-item" onclick="selectFolder('Spam')">
+                        <span class="folder-icon">⚠️</span>
+                        <span>垃圾郵件</span>
+                        <span class="folder-count">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 中間郵件列表 -->
+            <div class="email-list-panel">
+                <div class="email-list-header">
+                    <div class="email-list-title">收件匣</div>
+                    <div class="email-list-actions">
+                        <button class="action-btn" onclick="composeNewEmail()">✉️ 撰寫</button>
+                    </div>
+                </div>
+                <div class="email-list" id="emailList">
+                    <!-- 郵件列表將動態載入 -->
+                </div>
+            </div>
+
+            <!-- 右側郵件內容 -->
+            <div class="email-content-panel">
+                <div id="emailContentArea">
+                    <div class="no-email-selected">
+                        <div class="no-email-icon">📧</div>
+                        <div>選擇一封郵件來查看內容</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========== AI Pro 視圖 ========== -->
+        <div class="ai-view" id="aiView">
+            <!-- 左側寄件人面板 -->
+            <div class="senders-panel">
+                <div class="senders-header">
+                    <div style="font-weight: 600; margin-bottom: 8px;">寄件人分組</div>
+                    <div class="senders-filter">
+                        <button class="filter-btn active" onclick="filterSenders('all')">全部</button>
+                        <button class="filter-btn" onclick="filterSenders('high')">高價值</button>
+                        <button class="filter-btn" onclick="filterSenders('urgent')">緊急</button>
+                    </div>
+                </div>
+                <div class="senders-zones" id="sendersZones">
+                    <div class="sender-zone">
+                        <div class="zone-title">📥 待處理</div>
+                        <div id="pendingSenders"></div>
+                    </div>
+                    <div class="sender-zone">
+                        <div class="zone-title">⏳ 處理中</div>
+                        <div id="processingSenders"></div>
+                    </div>
+                    <div class="sender-zone">
+                        <div class="zone-title">✅ 已完成</div>
+                        <div id="completedSenders"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右側 AI 分析面板 -->
+            <div class="ai-panel">
+                <div class="ai-panel-header">
+                    <div style="font-weight: 600;">AI 智能分析</div>
+                    <div class="ai-toggle">
+                        <span style="font-size: 13px;">AI 分析</span>
+                        <div class="toggle-switch" id="aiToggle" onclick="toggleAI()">
+                            <div class="toggle-slider"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="ai-content">
+                    <div class="sender-emails-list">
+                        <div class="sender-emails-header" id="senderEmailsHeader">選擇寄件人</div>
+                        <div id="senderEmailsList">
+                            <!-- 該寄件人的郵件列表 -->
+                        </div>
+                    </div>
+                    <div class="email-detail-panel">
+                        <div id="emailDetailContent">
+                            <div class="no-email-selected">
+                                <div class="no-email-icon">👤</div>
+                                <div>選擇寄件人來查看郵件</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 撰寫郵件彈窗 -->
+    <div class="compose-modal" id="composeModal">
+        <div class="compose-window">
+            <div class="compose-header">
+                <div class="compose-title">撰寫郵件</div>
+                <button class="close-btn" onclick="closeCompose()">×</button>
+            </div>
+            <div class="compose-form">
+                <div class="form-group">
+                    <label class="form-label">收件人：</label>
+                    <input type="text" class="form-input" id="emailTo" placeholder="輸入郵件地址">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">副本：</label>
+                    <input type="text" class="form-input" id="emailCc" placeholder="副本 (CC)">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">密件副本：</label>
+                    <input type="text" class="form-input" id="emailBcc" placeholder="密件副本 (BCC)">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">主旨：</label>
+                    <input type="text" class="form-input" id="emailSubject" placeholder="輸入主旨">
+                </div>
+                <div id="aiSuggestionContainer"></div>
+                <textarea class="form-textarea" id="emailBody" placeholder="輸入郵件內容..."></textarea>
+            </div>
+            <div class="compose-footer">
+                <button class="compose-btn compose-btn-primary" onclick="sendEmail()" id="sendBtn">發送</button>
+                <button class="compose-btn compose-btn-secondary" onclick="closeCompose()">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ===== 全域變數 =====
+        const API_BASE = 'http://localhost:3000/api';
+        let allEmails = [];
+        let currentView = 'classic';
+        let currentFolder = 'INBOX';
+        let selectedEmailId = null;
+        let sendersMap = new Map();
+        let selectedSender = null;
+        let aiEnabled = false;
+
+        // ===== 初始化 =====
+        async function init() {
+            await loadEmails();
+            updateStatus('connected', '已連線');
+        }
+
+        // ===== 視圖切換 =====
+        function switchView(view) {
+            currentView = view;
+
+            // 更新按鈕狀態
+            document.querySelectorAll('.view-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            // 切換視圖
+            if (view === 'classic') {
+                document.getElementById('classicView').classList.remove('hidden');
+                document.getElementById('aiView').classList.remove('active');
+            } else {
+                document.getElementById('classicView').classList.add('hidden');
+                document.getElementById('aiView').classList.add('active');
+                processSenders();
+                renderSenders();
+            }
+        }
+
+        // ===== 載入郵件 =====
+        async function loadEmails() {
+            updateStatus('loading', '載入中...');
+
+            try {
+                const response = await fetch(`${API_BASE}/email/list?folder=${currentFolder}&limit=100&includeAI=true`);
+                const data = await response.json();
+
+                if (!data.success) {
+                    throw new Error(data.error || '載入郵件失敗');
+                }
+
+                allEmails = data.emails || [];
+                console.log(`✅ 成功載入 ${allEmails.length} 封郵件`);
+
+                // 渲染傳統視圖
+                renderEmailList();
+
+                // 更新計數
+                document.getElementById('inboxCount').textContent = allEmails.length;
+
+                updateStatus('connected', '已連線');
+            } catch (error) {
+                console.error('❌ 載入郵件失敗:', error);
+                updateStatus('error', '載入失敗');
+            }
+        }
+
+        // ===== 渲染郵件列表（傳統視圖）=====
+        function renderEmailList() {
+            const listEl = document.getElementById('emailList');
+            listEl.innerHTML = '';
+
+            if (allEmails.length === 0) {
+                listEl.innerHTML = '<div style="padding: 20px; text-align: center; color: #999;">目前沒有郵件</div>';
+                return;
+            }
+
+            allEmails.forEach(email => {
+                const item = document.createElement('div');
+                item.className = 'email-item';
+                if (email.flags && !email.flags.includes('\\Seen')) {
+                    item.classList.add('unread');
+                }
+                if (email.id === selectedEmailId) {
+                    item.classList.add('selected');
+                }
+
+                const fromName = email.from?.name || email.from?.address || '未知';
+                const date = email.date ? new Date(email.date).toLocaleString('zh-TW', {
+                    month: 'numeric',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                }) : '';
+
+                item.innerHTML = `
+                    <div class="email-item-header">
+                        <div class="email-from">${fromName}</div>
+                        <div class="email-date">${date}</div>
+                    </div>
+                    <div class="email-subject">${email.subject || '(無主旨)'}</div>
+                    <div class="email-preview">${email.text?.substring(0, 100) || email.bodyPreview || ''}</div>
+                `;
+
+                item.onclick = () => selectEmail(email);
+                listEl.appendChild(item);
+            });
+        }
+
+        // ===== 選擇郵件 =====
+        async function selectEmail(email) {
+            selectedEmailId = email.id;
+            renderEmailList();
+
+            const contentArea = document.getElementById('emailContentArea');
+
+            const fromName = email.from?.name || email.from?.address || '未知';
+            const fromEmail = email.from?.address || '';
+            const date = email.date ? new Date(email.date).toLocaleString('zh-TW') : '';
+
+            contentArea.innerHTML = `
+                <div class="email-content-header">
+                    <div class="email-subject-display">${email.subject || '(無主旨)'}</div>
+                    <div class="email-meta">
+                        <span><strong>寄件人：</strong>${fromName} &lt;${fromEmail}&gt;</span>
+                        <span><strong>日期：</strong>${date}</span>
+                    </div>
+                </div>
+                <div class="email-actions-toolbar">
+                    <button class="toolbar-btn primary" onclick="replyEmail()">↩️ 回覆</button>
+                    <button class="toolbar-btn" onclick="forwardEmail()">➡️ 轉發</button>
+                    <button class="toolbar-btn" onclick="markAsRead('${email.id}')">👁️ 標記已讀</button>
+                    <button class="toolbar-btn" onclick="markAsUnread('${email.id}')">✉️ 標記未讀</button>
+                    <button class="toolbar-btn danger" onclick="deleteEmail('${email.id}')">🗑️ 刪除</button>
+                </div>
+                <div class="email-body-container">
+                    <div class="email-body">${email.text || email.bodyPreview || '(無內容)'}</div>
+                </div>
+            `;
+
+            // 標記為已讀
+            if (email.flags && !email.flags.includes('\\Seen')) {
+                await markAsRead(email.id);
+            }
+        }
+
+        // ===== 郵件操作 =====
+        function composeNewEmail() {
+            document.getElementById('emailTo').value = '';
+            document.getElementById('emailCc').value = '';
+            document.getElementById('emailBcc').value = '';
+            document.getElementById('emailSubject').value = '';
+            document.getElementById('emailBody').value = '';
+            document.getElementById('aiSuggestionContainer').innerHTML = '';
+            document.getElementById('composeModal').classList.add('active');
+        }
+
+        function closeCompose() {
+            document.getElementById('composeModal').classList.remove('active');
+        }
+
+        async function sendEmail() {
+            const to = document.getElementById('emailTo').value;
+            const cc = document.getElementById('emailCc').value;
+            const bcc = document.getElementById('emailBcc').value;
+            const subject = document.getElementById('emailSubject').value;
+            const body = document.getElementById('emailBody').value;
+
+            if (!to || !subject) {
+                alert('請填寫收件人和主旨');
+                return;
+            }
+
+            const btn = document.getElementById('sendBtn');
+            btn.disabled = true;
+            btn.textContent = '發送中...';
+
+            try {
+                const response = await fetch(`${API_BASE}/email/send`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ to, cc, bcc, subject, text: body })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    alert('✅ 郵件已發送！');
+                    closeCompose();
+                    syncEmails();
+                } else {
+                    throw new Error(data.error || '發送失敗');
+                }
+            } catch (error) {
+                console.error('❌ 發送郵件失敗:', error);
+                alert('❌ 發送失敗: ' + error.message);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '發送';
+            }
+        }
+
+        function replyEmail() {
+            if (!selectedEmailId) return;
+            const email = allEmails.find(e => e.id === selectedEmailId);
+            if (!email) return;
+
+            document.getElementById('emailTo').value = email.from?.address || '';
+            document.getElementById('emailCc').value = '';
+            document.getElementById('emailBcc').value = '';
+            document.getElementById('emailSubject').value = 'Re: ' + (email.subject || '');
+            document.getElementById('emailBody').value = `\n\n--- 原始郵件 ---\n${email.text || email.bodyPreview || ''}`;
+            document.getElementById('composeModal').classList.add('active');
+        }
+
+        function forwardEmail() {
+            if (!selectedEmailId) return;
+            const email = allEmails.find(e => e.id === selectedEmailId);
+            if (!email) return;
+
+            document.getElementById('emailTo').value = '';
+            document.getElementById('emailCc').value = '';
+            document.getElementById('emailBcc').value = '';
+            document.getElementById('emailSubject').value = 'Fwd: ' + (email.subject || '');
+            document.getElementById('emailBody').value = `\n\n--- 轉發郵件 ---\n${email.text || email.bodyPreview || ''}`;
+            document.getElementById('composeModal').classList.add('active');
+        }
+
+        async function deleteEmail(emailId) {
+            if (!confirm('確定要刪除這封郵件嗎？')) return;
+
+            try {
+                const response = await fetch(`${API_BASE}/email/${emailId}`, {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ folder: currentFolder })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    alert('✅ 郵件已刪除');
+                    syncEmails();
+                } else {
+                    throw new Error(data.error || '刪除失敗');
+                }
+            } catch (error) {
+                console.error('❌ 刪除郵件失敗:', error);
+                alert('❌ 刪除失敗: ' + error.message);
+            }
+        }
+
+        async function markAsRead(emailId) {
+            try {
+                await fetch(`${API_BASE}/email/${emailId}/read`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ folder: currentFolder })
+                });
+                syncEmails();
+            } catch (error) {
+                console.error('標記已讀失敗:', error);
+            }
+        }
+
+        async function markAsUnread(emailId) {
+            try {
+                await fetch(`${API_BASE}/email/${emailId}/unread`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ folder: currentFolder })
+                });
+                syncEmails();
+            } catch (error) {
+                console.error('標記未讀失敗:', error);
+            }
+        }
+
+        // ===== 資料夾切換 =====
+        function selectFolder(folder) {
+            currentFolder = folder;
+
+            // 更新選中狀態
+            document.querySelectorAll('.folder-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            event.target.closest('.folder-item').classList.add('active');
+
+            // 重新載入郵件
+            loadEmails();
+        }
+
+        // ===== 搜尋 =====
+        function searchEmails(event) {
+            if (event.key === 'Enter') {
+                const query = document.getElementById('searchInput').value;
+                if (query) {
+                    performSearch(query);
+                }
+            }
+        }
+
+        async function performSearch(query) {
+            try {
+                const response = await fetch(`${API_BASE}/email/search/${encodeURIComponent(query)}?folder=${currentFolder}`);
+                const data = await response.json();
+
+                if (data.success) {
+                    allEmails = data.emails || [];
+                    renderEmailList();
+                }
+            } catch (error) {
+                console.error('搜尋失敗:', error);
+            }
+        }
+
+        // ===== AI Pro 視圖功能 =====
+        function processSenders() {
+            sendersMap.clear();
+
+            allEmails.forEach(email => {
+                const fromEmail = email.from?.address || 'unknown@example.com';
+                const fromName = email.from?.name || fromEmail.split('@')[0];
+
+                if (!sendersMap.has(fromEmail)) {
+                    sendersMap.set(fromEmail, {
+                        email: fromEmail,
+                        name: fromName,
+                        avatar: fromName.charAt(0).toUpperCase(),
+                        status: 'pending',
+                        emails: [],
+                        totalEmails: 0,
+                        unreadEmails: 0,
+                        priority: 'medium'
+                    });
+                }
+
+                const sender = sendersMap.get(fromEmail);
+                sender.emails.push(email);
+                sender.totalEmails++;
+
+                if (email.flags && !email.flags.includes('\\Seen')) {
+                    sender.unreadEmails++;
+                }
+
+                if (email.aiAnalysis?.priority === 'high') {
+                    sender.priority = 'high';
+                }
+            });
+        }
+
+        function renderSenders() {
+            const pending = document.getElementById('pendingSenders');
+            const processing = document.getElementById('processingSenders');
+            const completed = document.getElementById('completedSenders');
+
+            pending.innerHTML = '';
+            processing.innerHTML = '';
+            completed.innerHTML = '';
+
+            sendersMap.forEach(sender => {
+                const card = createSenderCard(sender);
+
+                if (sender.status === 'pending') {
+                    pending.appendChild(card);
+                } else if (sender.status === 'processing') {
+                    processing.appendChild(card);
+                } else {
+                    completed.appendChild(card);
+                }
+            });
+        }
+
+        function createSenderCard(sender) {
+            const card = document.createElement('div');
+            card.className = 'sender-card';
+            if (selectedSender?.email === sender.email) {
+                card.classList.add('selected');
+            }
+
+            const badges = [];
+            if (sender.priority === 'high') {
+                badges.push('<span class="sender-badge badge-high">💎 高價值</span>');
+            }
+            if (sender.unreadEmails > 0) {
+                badges.push('<span class="sender-badge badge-urgent">⚠️ 未讀</span>');
+            }
+
+            card.innerHTML = `
+                <div class="sender-card-header">
+                    <div class="sender-avatar">${sender.avatar}</div>
+                    <div class="sender-info">
+                        <div class="sender-name">${sender.name}</div>
+                        <div class="sender-email">${sender.email}</div>
+                    </div>
+                </div>
+                <div class="sender-stats">
+                    <span>📧 ${sender.totalEmails} 封</span>
+                    ${sender.unreadEmails > 0 ? `<span>✉️ ${sender.unreadEmails} 未讀</span>` : ''}
+                </div>
+                ${badges.length > 0 ? `<div style="margin-top: 8px;">${badges.join(' ')}</div>` : ''}
+            `;
+
+            card.onclick = () => selectSender(sender);
+            return card;
+        }
+
+        function selectSender(sender) {
+            selectedSender = sender;
+            renderSenders();
+
+            const headerEl = document.getElementById('senderEmailsHeader');
+            headerEl.textContent = `${sender.name} (${sender.totalEmails} 封)`;
+
+            const listEl = document.getElementById('senderEmailsList');
+            listEl.innerHTML = '';
+
+            sender.emails.forEach(email => {
+                const item = document.createElement('div');
+                item.className = 'sender-email-item';
+
+                const date = email.date ? new Date(email.date).toLocaleDateString('zh-TW') : '';
+
+                item.innerHTML = `
+                    <div style="font-weight: 600; margin-bottom: 4px;">${email.subject || '(無主旨)'}</div>
+                    <div style="font-size: 11px; color: #999;">${date}</div>
+                `;
+
+                item.onclick = () => showEmailDetail(email);
+                listEl.appendChild(item);
+            });
+        }
+
+        function showEmailDetail(email) {
+            const detailEl = document.getElementById('emailDetailContent');
+
+            detailEl.innerHTML = `
+                <div class="email-content-header">
+                    <div class="email-subject-display">${email.subject || '(無主旨)'}</div>
+                </div>
+                <div class="email-actions-toolbar">
+                    <button class="toolbar-btn primary" onclick="replyEmail()">↩️ 回覆</button>
+                    <button class="toolbar-btn" onclick="forwardEmail()">➡️ 轉發</button>
+                    <button class="toolbar-btn danger" onclick="deleteEmail('${email.id}')">🗑️ 刪除</button>
+                </div>
+                ${aiEnabled && email.aiAnalysis ? `
+                    <div class="ai-analysis-panel">
+                        <div class="ai-section">
+                            <div class="ai-section-title">📝 摘要</div>
+                            <div class="ai-section-content">${email.aiAnalysis.summary || '暫無分析'}</div>
+                        </div>
+                        ${email.aiAnalysis.todos && email.aiAnalysis.todos.length > 0 ? `
+                            <div class="ai-section">
+                                <div class="ai-section-title">✅ 待辦事項</div>
+                                <ul class="todo-list">
+                                    ${email.aiAnalysis.todos.map(todo => `
+                                        <li class="todo-item">
+                                            <div class="todo-checkbox"></div>
+                                            <span>${todo}</span>
+                                        </li>
+                                    `).join('')}
+                                </ul>
+                            </div>
+                        ` : ''}
+                    </div>
+                ` : ''}
+                <div class="email-body-container">
+                    <div class="email-body">${email.text || email.bodyPreview || '(無內容)'}</div>
+                </div>
+            `;
+
+            selectedEmailId = email.id;
+        }
+
+        function filterSenders(filter) {
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            // TODO: 實作篩選邏輯
+        }
+
+        function toggleAI() {
+            aiEnabled = !aiEnabled;
+            const toggle = document.getElementById('aiToggle');
+
+            if (aiEnabled) {
+                toggle.classList.add('active');
+            } else {
+                toggle.classList.remove('active');
+            }
+        }
+
+        // ===== 同步 =====
+        async function syncEmails() {
+            await loadEmails();
+        }
+
+        // ===== 狀態更新 =====
+        function updateStatus(status, text) {
+            const dot = document.getElementById('statusDot');
+            const statusText = document.getElementById('statusText');
+
+            statusText.textContent = text;
+
+            if (status === 'connected') {
+                dot.style.background = '#4caf50';
+            } else if (status === 'loading') {
+                dot.style.background = '#ff9800';
+            } else if (status === 'error') {
+                dot.style.background = '#f44336';
+            }
+        }
+
+        // ===== 啟動應用 =====
+        init();
+
+        console.log('🚀 Outlook AI 2.0 雙視圖系統已啟動！');
+        console.log('📋 傳統視圖：完整的 Outlook 功能');
+        console.log('🤖 AI Pro 視圖：智能寄件人分組與 AI 分析');
+    </script>
+</body>
+</html>

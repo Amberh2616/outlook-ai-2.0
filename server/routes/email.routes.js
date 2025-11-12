@@ -160,6 +160,73 @@ router.get('/search/:query', async (req, res) => {
     }
 });
 
+// 刪除郵件
+router.delete('/:emailId', async (req, res) => {
+    try {
+        const { emailId } = req.params;
+        const folder = req.body.folder || 'INBOX';
+
+        await emailService.deleteEmail(emailId, folder);
+
+        res.json({
+            success: true,
+            message: 'Email deleted successfully'
+        });
+    } catch (error) {
+        console.error('Delete email error:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+// 移動郵件到資料夾
+router.post('/:emailId/move', async (req, res) => {
+    try {
+        const { emailId } = req.params;
+        const { fromFolder, toFolder } = req.body;
+
+        if (!toFolder) {
+            return res.status(400).json({
+                success: false,
+                error: 'Missing required field: toFolder'
+            });
+        }
+
+        await emailService.moveEmail(emailId, fromFolder || 'INBOX', toFolder);
+
+        res.json({
+            success: true,
+            message: 'Email moved successfully'
+        });
+    } catch (error) {
+        console.error('Move email error:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+// 獲取郵件資料夾列表
+router.get('/folders/list', async (req, res) => {
+    try {
+        const folders = await emailService.listFolders();
+
+        res.json({
+            success: true,
+            folders: folders
+        });
+    } catch (error) {
+        console.error('List folders error:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
 // 測試連接
 router.get('/test/connection', async (req, res) => {
     try {
