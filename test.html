@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>測試伺服器連線</title>
+</head>
+<body>
+    <h1>測試伺服器連線</h1>
+    <div id="status">測試中...</div>
+    <script>
+        fetch('http://localhost:3000/api/health')
+            .then(r => r.json())
+            .then(data => {
+                document.getElementById('status').innerHTML = 
+                    '✅ 伺服器運行正常！<br>' + 
+                    'Status: ' + data.status + '<br>' +
+                    'Service: ' + data.service + '<br>' +
+                    '<a href="http://localhost:3000/outlook-ai-real.html">點擊這裡開啟 Outlook AI</a>';
+            })
+            .catch(err => {
+                document.getElementById('status').innerHTML = 
+                    '❌ 無法連接伺服器<br>' + 
+                    '錯誤: ' + err.message + '<br>' +
+                    '請確認伺服器是否運行中';
+            });
+    </script>
+</body>
+</html>
